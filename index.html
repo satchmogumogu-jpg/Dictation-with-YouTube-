@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Shadowing & Dictation Trainer</title>
+  <title>YouTube Dictation Trainer</title>
+  <!-- YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- Azure Speech SDK -->
   <script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
   <style>
     :root {
@@ -40,11 +43,11 @@
 
     /* Video Player */
     .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; margin-bottom: 8px; }
-    .video-container iframe { position: absolute; top:0; left: 0; width: 100%; height: 100%; border: 0; }
+    .video-container iframe, .video-container #player { position: absolute; top:0; left: 0; width: 100%; height: 100%; border: 0; }
 
     /* Subtitle Container */
     .subtitle-list {
-      max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: #fafafa;
+      max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: #fafafa;
     }
     .sub-item {
       padding: 6px 8px; border-radius: 6px; font-size: 0.88rem; cursor: pointer; transition: 0.15s; margin-bottom: 4px;
@@ -92,18 +95,23 @@
   <div class="card">
     <div class="card-title">1. YouTube 動画の読み込み</div>
     <div class="row">
-      <input type="text" id="ytUrl" placeholder="URLを貼り付け（youtu.be 形式もOK）" style="flex:1;">
+      <input type="text" id="ytUrl" placeholder="URLを貼り付け（例: https://youtu.be/...）" style="flex:1;">
       <button onclick="loadYouTubeVideo()">読み込む</button>
     </div>
     <div class="video-container">
-      <iframe id="ytIframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      <div id="player"></div>
+    </div>
+    <div class="row" style="margin-top:6px;">
+      <button class="secondary small" onclick="skipVideo(-3)">⏪ 3秒戻る</button>
+      <button class="secondary small" onclick="skipVideo(3)">3秒進む ⏩</button>
+      <button class="secondary small" id="speedBtn" onclick="toggleSpeed()">速度: 1.0x</button>
     </div>
   </div>
 
-  <!-- 3. 文字起こし取り込み & シャドーイング -->
+  <!-- 3. 文字起こし取り込み & シャドーイング連動 -->
   <div class="card">
     <div class="card-title">
-      <span>2. 文字起こし</span>
+      <span>2. 文字起こし（動画と自動連動）</span>
       <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 行</span>
     </div>
     
@@ -116,7 +124,7 @@
     </details>
 
     <div class="subtitle-list" id="subtitleList">
-      <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">行をタップするとその秒数から動画が再生されます。</div>
+      <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">文字起こしを反映すると一覧が表示され、再生に合わせてハイライトされます。タップでその秒数へジャンプします。</div>
     </div>
   </div>
 
@@ -162,9 +170,11 @@
   </div>
 
   <script>
-    let currentVideoId = '';
+    let ytPlayer = null;
     let subtitles = [];
     let currentChallenge = null;
+    let timeTrackingTimer = null;
+    let challengeStopTimer = null;
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('azureKey').value = localStorage.getItem('azure_speech_key') || '';
@@ -178,10 +188,24 @@
       alert('設定を保存しました');
     }
 
-    // 改善版：あらゆるYouTube URLから動画IDを確実に抽出する関数
+    // --- YouTube API 初期化 ---
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('player', {
+        height: '100%',
+        width: '100%',
+        videoId: 'dQw4w9WgXcQ',
+        playerVars: {
+          'playsinline': 1,
+          'origin': window.location.origin
+        },
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
     function extractVideoId(url) {
       if (!url) return null;
-      // youtu.be/xxxxxx?si=... または youtube.com/watch?v=xxxxxx などの正規表現
       const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/;
       const match = url.match(regExp);
       return (match && match[1]) ? match[1] : null;
@@ -192,14 +216,54 @@
       const videoId = extractVideoId(url);
       if (!videoId) return alert('動画IDが見つかりませんでした。URLを確認してください。');
       
-      currentVideoId = videoId;
-      seekToSeconds(0);
+      if (ytPlayer && ytPlayer.loadVideoById) {
+        ytPlayer.loadVideoById(videoId);
+      }
     }
 
-    function seekToSeconds(sec) {
-      if (!currentVideoId) return;
-      const iframe = document.getElementById('ytIframe');
-      iframe.src = `https://www.youtube.com/embed/${currentVideoId}?start=${Math.floor(sec)}&autoplay=1`;
+    function skipVideo(sec) {
+      if (!ytPlayer || !ytPlayer.getCurrentTime) return;
+      ytPlayer.seekTo(Math.max(0, ytPlayer.getCurrentTime() + sec), true);
+    }
+
+    const speeds = [1.0, 0.8, 0.6, 1.2];
+    let speedIdx = 0;
+    function toggleSpeed() {
+      if (!ytPlayer || !ytPlayer.setPlaybackRate) return;
+      speedIdx = (speedIdx + 1) % speeds.length;
+      const rate = speeds[speedIdx];
+      ytPlayer.setPlaybackRate(rate);
+      document.getElementById('speedBtn').innerText = `速度: ${rate.toFixed(1)}x`;
+    }
+
+    // --- 動画再生中の字幕追従（ハイライト監視） ---
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        if (!timeTrackingTimer) {
+          timeTrackingTimer = setInterval(trackSubtitles, 250);
+        }
+      } else {
+        clearInterval(timeTrackingTimer);
+        timeTrackingTimer = null;
+      }
+    }
+
+    function trackSubtitles() {
+      if (!ytPlayer || !ytPlayer.getCurrentTime || subtitles.length === 0) return;
+      const current = ytPlayer.getCurrentTime();
+
+      for (let i = 0; i < subtitles.length; i++) {
+        const sub = subtitles[i];
+        if (current >= sub.start && current < sub.end) {
+          const el = document.getElementById(`sub-${i}`);
+          if (el && !el.classList.contains('active')) {
+            document.querySelectorAll('.sub-item.active').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          break;
+        }
+      }
     }
 
     // --- 文字起こしパース ---
@@ -255,9 +319,10 @@
         div.id = `sub-${idx}`;
         div.innerHTML = `<span class="sub-time">${formatTime(sub.start)}</span>${sub.text}`;
         div.onclick = () => {
-          document.querySelectorAll('.sub-item.active').forEach(i => i.classList.remove('active'));
-          div.classList.add('active');
-          seekToSeconds(sub.start);
+          if (ytPlayer && ytPlayer.seekTo) {
+            ytPlayer.seekTo(sub.start, true);
+            ytPlayer.playVideo();
+          }
         };
         list.appendChild(div);
       });
@@ -269,7 +334,7 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // --- 出題 & 再生 ---
+    // --- ディクテーション出題 & 区間再生 ---
     function pickRandomSentence() {
       if (subtitles.length === 0) return alert('先に文字起こしを反映してください。');
       const randomIdx = Math.floor(Math.random() * subtitles.length);
@@ -293,8 +358,20 @@
     }
 
     function playCurrentChallenge() {
-      if (!currentChallenge) return;
-      seekToSeconds(currentChallenge.start);
+      if (!currentChallenge || !ytPlayer || !ytPlayer.seekTo) return;
+      clearInterval(challengeStopTimer);
+
+      ytPlayer.seekTo(currentChallenge.start, true);
+      ytPlayer.playVideo();
+
+      // そのセンテンスが終わったら自動停止
+      const endTime = currentChallenge.end;
+      challengeStopTimer = setInterval(() => {
+        if (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime() >= endTime) {
+          ytPlayer.pauseVideo();
+          clearInterval(challengeStopTimer);
+        }
+      }, 150);
     }
 
     function toggleHint() {
@@ -438,5 +515,4 @@
     }
   </script>
 </body>
-  </html>
-  
+</html>

@@ -79,7 +79,7 @@
 
   <h1>📺 YouTube Dictation Trainer</h1>
 
-  <!-- 1. Azure 設定 (折りたたみ) -->
+  <!-- 1. Azure 設定 -->
   <details class="card">
     <summary style="font-weight:600; cursor:pointer; color:#64748b; font-size:0.85rem;">⚙️ Azure API 設定</summary>
     <div style="margin-top: 8px;">
@@ -139,7 +139,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <span style="font-weight:600; font-size:0.85rem; color:#475569;">🎧 課題センテンス</span>
         <div>
-          <button class="secondary small" onclick="playCurrentChallenge()">🔁 再生</button>
+          <button class="secondary small" onclick="playCurrentChallenge()">🔁 この文を再生</button>
           <button class="secondary small" onclick="toggleHint()">💡 和訳</button>
         </div>
       </div>
@@ -174,7 +174,8 @@
     let subtitles = [];
     let currentChallenge = null;
     let timeTrackingTimer = null;
-    let challengeStopTimer = null;
+    let challengeStopInterval = null;
+    let challengeTimeout = null;
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('azureKey').value = localStorage.getItem('azure_speech_key') || '';
@@ -236,7 +237,7 @@
       document.getElementById('speedBtn').innerText = `速度: ${rate.toFixed(1)}x`;
     }
 
-    // --- 動画再生中の字幕追従（ハイライト監視） ---
+    // --- 字幕追従（通常再生時） ---
     function onPlayerStateChange(event) {
       if (event.data === YT.PlayerState.PLAYING) {
         if (!timeTrackingTimer) {
@@ -293,8 +294,9 @@
         }
       }
 
+      // 各行の終了秒数を設定
       for (let i = 0; i < subtitles.length; i++) {
-        subtitles[i].end = (i < subtitles.length - 1) ? subtitles[i+1].start : subtitles[i].start + 5;
+        subtitles[i].end = (i < subtitles.length - 1) ? subtitles[i+1].start : subtitles[i].start + 4;
       }
 
       renderSubtitles();
@@ -319,6 +321,7 @@
         div.id = `sub-${idx}`;
         div.innerHTML = `<span class="sub-time">${formatTime(sub.start)}</span>${sub.text}`;
         div.onclick = () => {
+          clearChallengeTimers();
           if (ytPlayer && ytPlayer.seekTo) {
             ytPlayer.seekTo(sub.start, true);
             ytPlayer.playVideo();
@@ -334,7 +337,7 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // --- ディクテーション出題 & 区間再生 ---
+    // --- ディクテーション出題 & 区間限定再生 ---
     function pickRandomSentence() {
       if (subtitles.length === 0) return alert('先に文字起こしを反映してください。');
       const randomIdx = Math.floor(Math.random() * subtitles.length);
@@ -357,21 +360,37 @@
       playCurrentChallenge();
     }
 
+    function clearChallengeTimers() {
+      if (challengeStopInterval) clearInterval(challengeStopInterval);
+      if (challengeTimeout) clearTimeout(challengeTimeout);
+      challengeStopInterval = null;
+      challengeTimeout = null;
+    }
+
     function playCurrentChallenge() {
       if (!currentChallenge || !ytPlayer || !ytPlayer.seekTo) return;
-      clearInterval(challengeStopTimer);
+      clearChallengeTimers();
 
-      ytPlayer.seekTo(currentChallenge.start, true);
+      const startTime = currentChallenge.start;
+      const endTime = currentChallenge.end;
+      const durationMs = Math.max(800, (endTime - startTime) * 1000);
+
+      ytPlayer.seekTo(startTime, true);
       ytPlayer.playVideo();
 
-      // そのセンテンスが終わったら自動停止
-      const endTime = currentChallenge.end;
-      challengeStopTimer = setInterval(() => {
+      // 1. 0.05秒ごとの高速チェックで endTime に達したら即停止
+      challengeStopInterval = setInterval(() => {
         if (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime() >= endTime) {
           ytPlayer.pauseVideo();
-          clearInterval(challengeStopTimer);
+          clearChallengeTimers();
         }
-      }, 150);
+      }, 50);
+
+      // 2. 万が一チェックがすり抜けた場合の安全ストップ
+      challengeTimeout = setTimeout(() => {
+        if (ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+        clearChallengeTimers();
+      }, durationMs + 200);
     }
 
     function toggleHint() {

@@ -118,9 +118,9 @@
   <!-- 3. 文字起こし取り込み & シャドーイング連動 -->
   <div class="card">
     <div class="card-title">
-      <span>2. 文字起こし（動画と連動）</span>
+      <span>2. 文字起こし（1文ごとに自動結合）</span>
       <div style="display:flex; align-items:center; gap:6px;">
-        <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 行</span>
+        <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 文</span>
         <button class="secondary small" id="toggleSubVisibilityBtn" onclick="toggleSubtitleVisibility()">👁️ 字幕を隠す</button>
       </div>
     </div>
@@ -135,7 +135,7 @@
 
     <div class="subtitle-wrapper">
       <div class="subtitle-list" id="subtitleList">
-        <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">文字起こしを反映すると一覧が表示されます。</div>
+        <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">文字起こしを反映すると、文単位でまとまって表示されます。</div>
       </div>
     </div>
   </div>
@@ -183,7 +183,7 @@
 
   <script>
     let ytPlayer = null;
-    let subtitles = [];
+    let sentences = [];
     let currentChallenge = null;
     let timeTrackingTimer = null;
     let challengeStopInterval = null;
@@ -202,7 +202,6 @@
       alert('設定を保存しました');
     }
 
-    // --- 字幕の表示 / 隠す切り替え ---
     function toggleSubtitleVisibility() {
       isSubtitlesHidden = !isSubtitlesHidden;
       const list = document.getElementById('subtitleList');
@@ -216,7 +215,6 @@
       }
     }
 
-    // --- YouTube API 初期化 ---
     function onYouTubeIframeAPIReady() {
       ytPlayer = new YT.Player('player', {
         height: '100%',
@@ -264,7 +262,6 @@
       document.getElementById('speedBtn').innerText = `速度: ${rate.toFixed(1)}x`;
     }
 
-    // --- 字幕追従（通常再生時） ---
     function onPlayerStateChange(event) {
       if (event.data === YT.PlayerState.PLAYING) {
         if (!timeTrackingTimer) {
@@ -277,15 +274,15 @@
     }
 
     function trackSubtitles() {
-      if (!ytPlayer || !ytPlayer.getCurrentTime || subtitles.length === 0) return;
+      if (!ytPlayer || !ytPlayer.getCurrentTime || sentences.length === 0) return;
       const current = ytPlayer.getCurrentTime();
 
-      for (let i = 0; i < subtitles.length; i++) {
-        const sub = subtitles[i];
-        if (current >= sub.start && current < sub.end) {
+      for (let i = 0; i < sentences.length; i++) {
+        const item = sentences[i];
+        if (current >= item.start && current < item.end) {
           const el = document.getElementById(`sub-${i}`);
           if (el && !el.classList.contains('active')) {
-            document.querySelectorAll('.sub-item.active').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.sub-item.active').forEach(it => it.classList.remove('active'));
             el.classList.add('active');
             if (!isSubtitlesHidden) {
               el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -296,13 +293,13 @@
       }
     }
 
-    // --- 文字起こしパース ---
+    // --- 文字起こしパース＆1文まとめ（センテンス化）ロジック ---
     function parseRawTranscript() {
       const raw = document.getElementById('transcriptInput').value.trim();
       if (!raw) return;
 
-      subtitles = [];
       const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const rawTokens = [];
 
       let tempTime = null;
       for (let i = 0; i < lines.length; i++) {
@@ -313,23 +310,56 @@
           const sec = timeToSeconds(timeMatch[0]);
           const text = line.replace(timeMatch[0], '').trim();
           if (text) {
-            subtitles.push({ start: sec, text: text });
+            rawTokens.push({ start: sec, text: text });
           } else {
             tempTime = sec;
           }
         } else if (tempTime !== null) {
-          subtitles.push({ start: tempTime, text: line });
+          rawTokens.push({ start: tempTime, text: line });
           tempTime = null;
         }
       }
 
-      for (let i = 0; i < subtitles.length; i++) {
-        subtitles[i].end = (i < subtitles.length - 1) ? subtitles[i+1].start : subtitles[i].start + 4;
+      if (rawTokens.length === 0) return alert('タイムスタンプが見つかりませんでした。');
+
+      // 各行の終了秒数を概算
+      for (let i = 0; i < rawTokens.length; i++) {
+        rawTokens[i].end = (i < rawTokens.length - 1) ? rawTokens[i+1].start : rawTokens[i].start + 4;
+      }
+
+      // 「文末のピリオド・感嘆符・疑問符」または「一定の長さ」でひとまとまりに結合
+      sentences = [];
+      let currentSentence = null;
+
+      for (let i = 0; i < rawTokens.length; i++) {
+        const item = rawTokens[i];
+        if (!currentSentence) {
+          currentSentence = {
+            start: item.start,
+            end: item.end,
+            text: item.text,
+            tokenCount: 1
+          };
+        } else {
+          currentSentence.text += ' ' + item.text;
+          currentSentence.end = item.end;
+          currentSentence.tokenCount++;
+        }
+
+        const trimmed = currentSentence.text.trim();
+        const hasSentenceEnd = /[.?!]["']?$/.test(trimmed);
+        const isLongEnough = currentSentence.tokenCount >= 3 || trimmed.split(/\s+/).length >= 8;
+
+        // 文末記号があるか、または3行以上/8単語以上合体したら1文として確定
+        if (hasSentenceEnd || isLongEnough || i === rawTokens.length - 1) {
+          sentences.push(currentSentence);
+          currentSentence = null;
+        }
       }
 
       renderSubtitles();
       document.getElementById('transcriptDetails').removeAttribute('open');
-      alert(`${subtitles.length} 行の文字起こしを反映しました！`);
+      alert(`${sentences.length} 個の自然な文として取り込みました！`);
     }
 
     function timeToSeconds(t) {
@@ -341,18 +371,18 @@
 
     function renderSubtitles() {
       const list = document.getElementById('subtitleList');
-      document.getElementById('subCount').innerText = `${subtitles.length} 行`;
+      document.getElementById('subCount').innerText = `${sentences.length} 文`;
       list.innerHTML = '';
 
-      subtitles.forEach((sub, idx) => {
+      sentences.forEach((s, idx) => {
         const div = document.createElement('div');
         div.className = 'sub-item';
         div.id = `sub-${idx}`;
-        div.innerHTML = `<span class="sub-time">${formatTime(sub.start)}</span>${sub.text}`;
+        div.innerHTML = `<span class="sub-time">${formatTime(s.start)}</span>${s.text}`;
         div.onclick = () => {
           clearChallengeTimers();
           if (ytPlayer && ytPlayer.seekTo) {
-            ytPlayer.seekTo(sub.start, true);
+            ytPlayer.seekTo(s.start, true);
             ytPlayer.playVideo();
           }
         };
@@ -366,18 +396,18 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // --- ディクテーション出題 & 全文和訳 ---
+    // --- ディクテーション出題 & 区間再生 ---
     function pickRandomSentence() {
-      if (subtitles.length === 0) return alert('先に文字起こしを反映してください。');
-      const randomIdx = Math.floor(Math.random() * subtitles.length);
-      currentChallenge = subtitles[randomIdx];
+      if (sentences.length === 0) return alert('先に文字起こしを反映してください。');
+      const randomIdx = Math.floor(Math.random() * sentences.length);
+      currentChallenge = sentences[randomIdx];
 
       document.getElementById('userInput').value = '';
       document.getElementById('resultBox').innerHTML = '';
       document.getElementById('wordsContainer').innerHTML = '';
       document.getElementById('hintBox').style.display = 'none';
 
-      // 全文和訳：全セグメントを結合
+      // 全文和訳
       fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(currentChallenge.text)}`)
         .then(r => r.json())
         .then(data => {
@@ -408,7 +438,7 @@
 
       const startTime = currentChallenge.start;
       const endTime = currentChallenge.end;
-      const durationMs = Math.max(800, (endTime - startTime) * 1000);
+      const durationMs = Math.max(1000, (endTime - startTime) * 1000);
 
       ytPlayer.seekTo(startTime, true);
       ytPlayer.playVideo();
@@ -431,7 +461,6 @@
       h.style.display = h.style.display === 'none' ? 'block' : 'none';
     }
 
-    // --- 回答チェック ---
     function clean(str) {
       return str.toLowerCase().replace(/[.,?!'"]/g, '').trim();
     }
@@ -493,7 +522,6 @@
       }
     }
 
-    // --- 音声入力 ---
     let recognition = null;
     let isRecording = false;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -512,7 +540,6 @@
       if (isRecording) recognition.stop(); else recognition.start();
     }
 
-    // --- Azure 発音チェック ---
     async function assessPronunciation() {
       if (!currentChallenge) return alert('先に出題ボタンを押してください');
       const key = document.getElementById('azureKey').value.trim();

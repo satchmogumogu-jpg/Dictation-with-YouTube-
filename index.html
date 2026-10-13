@@ -46,8 +46,15 @@
     .video-container iframe, .video-container #player { position: absolute; top:0; left: 0; width: 100%; height: 100%; border: 0; }
 
     /* Subtitle Container */
+    .subtitle-wrapper { position: relative; }
     .subtitle-list {
       max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: #fafafa;
+      transition: filter 0.2s;
+    }
+    .subtitle-list.hidden-mode {
+      filter: blur(8px);
+      user-select: none;
+      pointer-events: none;
     }
     .sub-item {
       padding: 6px 8px; border-radius: 6px; font-size: 0.88rem; cursor: pointer; transition: 0.15s; margin-bottom: 4px;
@@ -58,7 +65,7 @@
 
     /* Challenge */
     .challenge-box { background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
-    .hint-box { font-size: 0.85rem; color: #475569; background: #fef3c7; padding: 8px; border-radius: 6px; margin-top: 6px; display: none; }
+    .hint-box { font-size: 0.85rem; color: #475569; background: #fef3c7; padding: 8px; border-radius: 6px; margin-top: 6px; display: none; line-height: 1.4; }
     
     /* Assessment Badges */
     .words-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -111,11 +118,14 @@
   <!-- 3. 文字起こし取り込み & シャドーイング連動 -->
   <div class="card">
     <div class="card-title">
-      <span>2. 文字起こし（動画と自動連動）</span>
-      <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 行</span>
+      <span>2. 文字起こし（動画と連動）</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 行</span>
+        <button class="secondary small" id="toggleSubVisibilityBtn" onclick="toggleSubtitleVisibility()">👁️ 字幕を隠す</button>
+      </div>
     </div>
     
-    <details open style="margin-bottom:8px;">
+    <details id="transcriptDetails" open style="margin-bottom:8px;">
       <summary style="font-size:0.85rem; color:var(--primary); cursor:pointer;">📋 文字起こしを貼り付ける</summary>
       <div style="margin-top:6px;">
         <textarea id="transcriptInput" style="min-height:75px;" placeholder="文字起こしテキストをここに貼り付けてください..."></textarea>
@@ -123,8 +133,10 @@
       </div>
     </details>
 
-    <div class="subtitle-list" id="subtitleList">
-      <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">文字起こしを反映すると一覧が表示され、再生に合わせてハイライトされます。タップでその秒数へジャンプします。</div>
+    <div class="subtitle-wrapper">
+      <div class="subtitle-list" id="subtitleList">
+        <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">文字起こしを反映すると一覧が表示されます。</div>
+      </div>
     </div>
   </div>
 
@@ -140,7 +152,7 @@
         <span style="font-weight:600; font-size:0.85rem; color:#475569;">🎧 課題センテンス</span>
         <div>
           <button class="secondary small" onclick="playCurrentChallenge()">🔁 この文を再生</button>
-          <button class="secondary small" onclick="toggleHint()">💡 和訳</button>
+          <button class="secondary small" onclick="toggleHint()">💡 全文和訳</button>
         </div>
       </div>
       <div class="hint-box" id="hintBox">
@@ -176,6 +188,7 @@
     let timeTrackingTimer = null;
     let challengeStopInterval = null;
     let challengeTimeout = null;
+    let isSubtitlesHidden = false;
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('azureKey').value = localStorage.getItem('azure_speech_key') || '';
@@ -187,6 +200,20 @@
       localStorage.setItem('azure_speech_key', document.getElementById('azureKey').value.trim());
       localStorage.setItem('azure_speech_region', document.getElementById('azureRegion').value.trim());
       alert('設定を保存しました');
+    }
+
+    // --- 字幕の表示 / 隠す切り替え ---
+    function toggleSubtitleVisibility() {
+      isSubtitlesHidden = !isSubtitlesHidden;
+      const list = document.getElementById('subtitleList');
+      const btn = document.getElementById('toggleSubVisibilityBtn');
+      if (isSubtitlesHidden) {
+        list.classList.add('hidden-mode');
+        btn.innerText = '👁️‍🗨️ 字幕を表示';
+      } else {
+        list.classList.remove('hidden-mode');
+        btn.innerText = '👁️ 字幕を隠す';
+      }
     }
 
     // --- YouTube API 初期化 ---
@@ -260,7 +287,9 @@
           if (el && !el.classList.contains('active')) {
             document.querySelectorAll('.sub-item.active').forEach(item => item.classList.remove('active'));
             el.classList.add('active');
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (!isSubtitlesHidden) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
           }
           break;
         }
@@ -294,12 +323,12 @@
         }
       }
 
-      // 各行の終了秒数を設定
       for (let i = 0; i < subtitles.length; i++) {
         subtitles[i].end = (i < subtitles.length - 1) ? subtitles[i+1].start : subtitles[i].start + 4;
       }
 
       renderSubtitles();
+      document.getElementById('transcriptDetails').removeAttribute('open');
       alert(`${subtitles.length} 行の文字起こしを反映しました！`);
     }
 
@@ -337,7 +366,7 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // --- ディクテーション出題 & 区間限定再生 ---
+    // --- ディクテーション出題 & 全文和訳 ---
     function pickRandomSentence() {
       if (subtitles.length === 0) return alert('先に文字起こしを反映してください。');
       const randomIdx = Math.floor(Math.random() * subtitles.length);
@@ -348,10 +377,16 @@
       document.getElementById('wordsContainer').innerHTML = '';
       document.getElementById('hintBox').style.display = 'none';
 
-      fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURI(currentChallenge.text)}`)
+      // 全文和訳：全セグメントを結合
+      fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(currentChallenge.text)}`)
         .then(r => r.json())
         .then(data => {
-          document.getElementById('hintText').innerText = data[0][0][0] || 'ヒントなし';
+          if (data && data[0]) {
+            const fullTranslation = data[0].map(item => item[0]).filter(Boolean).join('');
+            document.getElementById('hintText').innerText = fullTranslation || '翻訳なし';
+          } else {
+            document.getElementById('hintText').innerText = 'ヒントなし';
+          }
         })
         .catch(() => {
           document.getElementById('hintText').innerText = 'ヒント取得失敗';
@@ -378,7 +413,6 @@
       ytPlayer.seekTo(startTime, true);
       ytPlayer.playVideo();
 
-      // 1. 0.05秒ごとの高速チェックで endTime に達したら即停止
       challengeStopInterval = setInterval(() => {
         if (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime() >= endTime) {
           ytPlayer.pauseVideo();
@@ -386,7 +420,6 @@
         }
       }, 50);
 
-      // 2. 万が一チェックがすり抜けた場合の安全ストップ
       challengeTimeout = setTimeout(() => {
         if (ytPlayer.pauseVideo) ytPlayer.pauseVideo();
         clearChallengeTimers();

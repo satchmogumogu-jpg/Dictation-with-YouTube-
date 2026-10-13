@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Shadowing & Dictation Trainer</title>
+  <script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --border: #cbd5e1;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --highlight: #dbeafe;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 12px; max-width: 640px; margin: 0 auto; line-height: 1.5; }
+    h1 { font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; text-align: center; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .card-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #334155; display: flex; justify-content: space-between; align-items: center; }
+    
+    .row { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    input[type="text"], input[type="password"], textarea {
+      width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;
+    }
+    textarea { resize: vertical; min-height: 55px; }
+
+    button {
+      background: var(--primary); color: white; border: none; border-radius: 6px; padding: 7px 12px;
+      font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    button:hover { background: var(--primary-hover); }
+    button.secondary { background: #f1f5f9; color: #334155; border: 1px solid var(--border); }
+    button.secondary:hover { background: #e2e8f0; }
+    button.small { padding: 4px 8px; font-size: 0.8rem; }
+
+    /* Video Player */
+    .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background: #000; margin-bottom: 8px; }
+    .video-container iframe { position: absolute; top:0; left: 0; width: 100%; height: 100%; border: 0; }
+
+    /* Subtitle Container */
+    .subtitle-list {
+      max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: #fafafa;
+    }
+    .sub-item {
+      padding: 6px 8px; border-radius: 6px; font-size: 0.88rem; cursor: pointer; transition: 0.15s; margin-bottom: 4px;
+    }
+    .sub-item:hover { background: #edf2f7; }
+    .sub-item.active { background: var(--highlight); font-weight: 600; color: #1e40af; border-left: 4px solid var(--primary); }
+    .sub-time { font-size: 0.75rem; color: #94a3b8; margin-right: 6px; }
+
+    /* Challenge */
+    .challenge-box { background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+    .hint-box { font-size: 0.85rem; color: #475569; background: #fef3c7; padding: 8px; border-radius: 6px; margin-top: 6px; display: none; }
+    
+    /* Assessment Badges */
+    .words-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .word-badge { padding: 3px 6px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .score-good { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .score-bad { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+    /* History List */
+    .history-list { max-height: 180px; overflow-y: auto; font-size: 0.82rem; }
+    .history-item { padding: 6px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+    .history-item:last-child { border-bottom: none; }
+    .history-tag { font-size: 0.72rem; padding: 2px 5px; border-radius: 4px; margin-right: 6px; }
+    .tag-correct { background: #dcfce7; color: #15803d; }
+    .tag-wrong { background: #fee2e2; color: #b91c1c; }
+  </style>
+</head>
+<body>
+
+  <h1>📺 YouTube Dictation Trainer</h1>
+
+  <!-- 1. Azure 設定 (折りたたみ) -->
+  <details class="card">
+    <summary style="font-weight:600; cursor:pointer; color:#64748b; font-size:0.85rem;">⚙️ Azure API 設定</summary>
+    <div style="margin-top: 8px;">
+      <div class="row">
+        <input type="password" id="azureKey" placeholder="Azure Speech Key">
+        <input type="text" id="azureRegion" placeholder="Region (例: japaneast)" style="max-width: 140px;">
+        <button class="secondary small" onclick="saveConfig()">保存</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2. YouTube URL & プレイヤー -->
+  <div class="card">
+    <div class="card-title">1. YouTube 動画の読み込み</div>
+    <div class="row">
+      <input type="text" id="ytUrl" placeholder="URLを貼り付け（youtu.be 形式もOK）" style="flex:1;">
+      <button onclick="loadYouTubeVideo()">読み込む</button>
+    </div>
+    <div class="video-container">
+      <iframe id="ytIframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <!-- 3. 文字起こし取り込み & シャドーイング -->
+  <div class="card">
+    <div class="card-title">
+      <span>2. 文字起こし</span>
+      <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 行</span>
+    </div>
+    
+    <details open style="margin-bottom:8px;">
+      <summary style="font-size:0.85rem; color:var(--primary); cursor:pointer;">📋 文字起こしを貼り付ける</summary>
+      <div style="margin-top:6px;">
+        <textarea id="transcriptInput" style="min-height:75px;" placeholder="文字起こしテキストをここに貼り付けてください..."></textarea>
+        <button class="secondary small" style="margin-top:4px;" onclick="parseRawTranscript()">文字起こしを反映</button>
+      </div>
+    </details>
+
+    <div class="subtitle-list" id="subtitleList">
+      <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">行をタップするとその秒数から動画が再生されます。</div>
+    </div>
+  </div>
+
+  <!-- 4. ディクテーション特訓 -->
+  <div class="card">
+    <div class="card-title">
+      <span>3. ディクテーション特訓</span>
+      <button onclick="pickRandomSentence()">🎲 1文出題</button>
+    </div>
+
+    <div class="challenge-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-weight:600; font-size:0.85rem; color:#475569;">🎧 課題センテンス</span>
+        <div>
+          <button class="secondary small" onclick="playCurrentChallenge()">🔁 再生</button>
+          <button class="secondary small" onclick="toggleHint()">💡 和訳</button>
+        </div>
+      </div>
+      <div class="hint-box" id="hintBox">
+        <span id="hintText">翻訳を読み込み中...</span>
+      </div>
+    </div>
+
+    <textarea id="userInput" placeholder="聞き取った英文を入力、または音声入力..."></textarea>
+    
+    <div class="row" style="margin-top:6px;">
+      <button class="secondary small" id="sttBtn" onclick="toggleSTT()">🎙️ 音声入力</button>
+      <button onclick="checkAnswer()">📝 判定＆保存</button>
+      <button class="secondary small" onclick="assessPronunciation()">🎯 発音チェック</button>
+    </div>
+
+    <div id="resultBox" style="margin-top:6px; font-size:0.88rem;"></div>
+    <div class="words-container" id="wordsContainer"></div>
+  </div>
+
+  <!-- 5. 復習＆習得履歴 -->
+  <div class="card">
+    <div class="card-title">
+      <span>4. 復習履歴</span>
+      <button class="secondary small" onclick="clearHistory()">クリア</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <script>
+    let currentVideoId = '';
+    let subtitles = [];
+    let currentChallenge = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('azureKey').value = localStorage.getItem('azure_speech_key') || '';
+      document.getElementById('azureRegion').value = localStorage.getItem('azure_speech_region') || 'japaneast';
+      renderHistory();
+    });
+
+    function saveConfig() {
+      localStorage.setItem('azure_speech_key', document.getElementById('azureKey').value.trim());
+      localStorage.setItem('azure_speech_region', document.getElementById('azureRegion').value.trim());
+      alert('設定を保存しました');
+    }
+
+    // 改善版：あらゆるYouTube URLから動画IDを確実に抽出する関数
+    function extractVideoId(url) {
+      if (!url) return null;
+      // youtu.be/xxxxxx?si=... または youtube.com/watch?v=xxxxxx などの正規表現
+      const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/;
+      const match = url.match(regExp);
+      return (match && match[1]) ? match[1] : null;
+    }
+
+    function loadYouTubeVideo() {
+      const url = document.getElementById('ytUrl').value.trim();
+      const videoId = extractVideoId(url);
+      if (!videoId) return alert('動画IDが見つかりませんでした。URLを確認してください。');
+      
+      currentVideoId = videoId;
+      seekToSeconds(0);
+    }
+
+    function seekToSeconds(sec) {
+      if (!currentVideoId) return;
+      const iframe = document.getElementById('ytIframe');
+      iframe.src = `https://www.youtube.com/embed/${currentVideoId}?start=${Math.floor(sec)}&autoplay=1`;
+    }
+
+    // --- 文字起こしパース ---
+    function parseRawTranscript() {
+      const raw = document.getElementById('transcriptInput').value.trim();
+      if (!raw) return;
+
+      subtitles = [];
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+      let tempTime = null;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const timeMatch = line.match(/^(\d{1,2}:)?\d{1,2}:\d{2}/);
+
+        if (timeMatch) {
+          const sec = timeToSeconds(timeMatch[0]);
+          const text = line.replace(timeMatch[0], '').trim();
+          if (text) {
+            subtitles.push({ start: sec, text: text });
+          } else {
+            tempTime = sec;
+          }
+        } else if (tempTime !== null) {
+          subtitles.push({ start: tempTime, text: line });
+          tempTime = null;
+        }
+      }
+
+      for (let i = 0; i < subtitles.length; i++) {
+        subtitles[i].end = (i < subtitles.length - 1) ? subtitles[i+1].start : subtitles[i].start + 5;
+      }
+
+      renderSubtitles();
+      alert(`${subtitles.length} 行の文字起こしを反映しました！`);
+    }
+
+    function timeToSeconds(t) {
+      const parts = t.split(':').map(Number);
+      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      if (parts.length === 2) return parts[0] * 60 + parts[1];
+      return 0;
+    }
+
+    function renderSubtitles() {
+      const list = document.getElementById('subtitleList');
+      document.getElementById('subCount').innerText = `${subtitles.length} 行`;
+      list.innerHTML = '';
+
+      subtitles.forEach((sub, idx) => {
+        const div = document.createElement('div');
+        div.className = 'sub-item';
+        div.id = `sub-${idx}`;
+        div.innerHTML = `<span class="sub-time">${formatTime(sub.start)}</span>${sub.text}`;
+        div.onclick = () => {
+          document.querySelectorAll('.sub-item.active').forEach(i => i.classList.remove('active'));
+          div.classList.add('active');
+          seekToSeconds(sub.start);
+        };
+        list.appendChild(div);
+      });
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    // --- 出題 & 再生 ---
+    function pickRandomSentence() {
+      if (subtitles.length === 0) return alert('先に文字起こしを反映してください。');
+      const randomIdx = Math.floor(Math.random() * subtitles.length);
+      currentChallenge = subtitles[randomIdx];
+
+      document.getElementById('userInput').value = '';
+      document.getElementById('resultBox').innerHTML = '';
+      document.getElementById('wordsContainer').innerHTML = '';
+      document.getElementById('hintBox').style.display = 'none';
+
+      fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURI(currentChallenge.text)}`)
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('hintText').innerText = data[0][0][0] || 'ヒントなし';
+        })
+        .catch(() => {
+          document.getElementById('hintText').innerText = 'ヒント取得失敗';
+        });
+
+      playCurrentChallenge();
+    }
+
+    function playCurrentChallenge() {
+      if (!currentChallenge) return;
+      seekToSeconds(currentChallenge.start);
+    }
+
+    function toggleHint() {
+      const h = document.getElementById('hintBox');
+      h.style.display = h.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // --- 回答チェック ---
+    function clean(str) {
+      return str.toLowerCase().replace(/[.,?!'"]/g, '').trim();
+    }
+
+    function checkAnswer() {
+      if (!currentChallenge) return;
+      const user = document.getElementById('userInput').value.trim();
+      const isMatch = clean(user) === clean(currentChallenge.text);
+
+      const resBox = document.getElementById('resultBox');
+      if (isMatch) {
+        resBox.innerHTML = '<span style="color:var(--success); font-weight:700;">🎉 正解！パーフェクトです！</span>';
+      } else {
+        resBox.innerHTML = `
+          <div style="color:var(--danger); font-weight:600;">⚠️ 不正解 / 差分あり</div>
+          <div style="font-size:0.85rem; margin-top:4px; color:#334155;">正解: <strong>${currentChallenge.text}</strong></div>
+        `;
+      }
+
+      saveHistoryItem({
+        target: currentChallenge.text,
+        user: user || "(未入力)",
+        correct: isMatch,
+        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    }
+
+    function saveHistoryItem(item) {
+      const history = JSON.parse(localStorage.getItem('yt_dictation_history') || '[]');
+      history.unshift(item);
+      if (history.length > 30) history.pop();
+      localStorage.setItem('yt_dictation_history', JSON.stringify(history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem('yt_dictation_history') || '[]');
+      const container = document.getElementById('historyList');
+      if (history.length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8; padding:8px;">まだ履歴がありません。</div>';
+        return;
+      }
+      container.innerHTML = history.map(h => `
+        <div class="history-item">
+          <div>
+            <span class="history-tag ${h.correct ? 'tag-correct' : 'tag-wrong'}">${h.correct ? '正解' : '要復習'}</span>
+            <strong>${h.target}</strong>
+            <div style="color:#64748b; font-size:0.8rem; margin-top:2px;">あなたの回答: ${h.user}</div>
+          </div>
+          <span style="color:#94a3b8; font-size:0.75rem;">${h.date}</span>
+        </div>
+      `).join('');
+    }
+
+    function clearHistory() {
+      if (confirm('学習履歴をクリアしますか？')) {
+        localStorage.removeItem('yt_dictation_history');
+        renderHistory();
+      }
+    }
+
+    // --- 音声入力 ---
+    let recognition = null;
+    let isRecording = false;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SR();
+      recognition.lang = 'en-US';
+      recognition.onstart = () => { isRecording = true; document.getElementById('sttBtn').innerText = '⏹️ 録音中...'; };
+      recognition.onresult = (e) => {
+        document.getElementById('userInput').value = e.results[0][0].transcript;
+      };
+      recognition.onend = () => { isRecording = false; document.getElementById('sttBtn').innerText = '🎙️ 音声入力'; };
+    }
+
+    function toggleSTT() {
+      if (!recognition) return alert('Chromeなどのブラウザをご利用ください');
+      if (isRecording) recognition.stop(); else recognition.start();
+    }
+
+    // --- Azure 発音チェック ---
+    async function assessPronunciation() {
+      if (!currentChallenge) return alert('先に出題ボタンを押してください');
+      const key = document.getElementById('azureKey').value.trim();
+      const region = document.getElementById('azureRegion').value.trim();
+      if (!key || !region) return alert('上の設定欄にAzureキーを入れてください');
+
+      const wordsContainer = document.getElementById('wordsContainer');
+      wordsContainer.innerHTML = '<span style="font-size:0.85rem; color:#64748b;">🎙️ 発音してください...</span>';
+
+      try {
+        const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(key, region);
+        speechConfig.speechRecognitionLanguage = "en-US";
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+        const pronunciationConfig = new SpeechSDK.PronunciationAssessmentConfig(
+          currentChallenge.text,
+          SpeechSDK.PronunciationAssessmentGradingSystem.HundredMark,
+          SpeechSDK.PronunciationAssessmentGranularity.Phoneme,
+          true
+        );
+
+        const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+        pronunciationConfig.applyTo(recognizer);
+
+        recognizer.recognizeOnceAsync(result => {
+          if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+            const resJson = JSON.parse(result.properties.getProperty(SpeechSDK.PropertyId.SpeechServiceResponse_JsonResult));
+            renderAssessmentWords(resJson);
+          } else {
+            wordsContainer.innerHTML = '<span style="color:var(--danger); font-size:0.85rem;">認識できませんでした</span>';
+          }
+          recognizer.close();
+        });
+      } catch (e) {
+        console.error(e);
+        wordsContainer.innerHTML = 'エラーが発生しました';
+      }
+    }
+
+    function renderAssessmentWords(data) {
+      const container = document.getElementById('wordsContainer');
+      container.innerHTML = '';
+      const words = data?.NBest?.[0]?.Words;
+      if (!words) return;
+
+      words.forEach(w => {
+        const score = w.PronunciationAssessment.AccuracyScore;
+        const span = document.createElement('span');
+        span.className = `word-badge ${score >= 70 ? 'score-good' : 'score-bad'}`;
+        span.innerText = `${w.Word} (${score}点)`;
+        container.appendChild(span);
+      });
+    }
+  </script>
+</body>
+  </html>
+  

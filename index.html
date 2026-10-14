@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Dictation Trainer</title>
+  <title>YouTube Speaking & Dictation Trainer</title>
   <!-- YouTube IFrame API -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <!-- Azure Speech SDK -->
@@ -39,6 +39,8 @@
     button:hover { background: var(--primary-hover); }
     button.secondary { background: #f1f5f9; color: #334155; border: 1px solid var(--border); }
     button.secondary:hover { background: #e2e8f0; }
+    button.accent { background: #059669; }
+    button.accent:hover { background: #047857; }
     button.small { padding: 4px 8px; font-size: 0.8rem; }
 
     /* Video Player */
@@ -48,7 +50,7 @@
     /* Subtitle Container */
     .subtitle-wrapper { position: relative; }
     .subtitle-list {
-      max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: #fafafa;
+      max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: #fafafa;
       transition: filter 0.2s;
     }
     .subtitle-list.hidden-mode {
@@ -63,13 +65,15 @@
     .sub-item.active { background: var(--highlight); font-weight: 600; color: #1e40af; border-left: 4px solid var(--primary); }
     .sub-time { font-size: 0.75rem; color: #94a3b8; margin-right: 6px; }
 
-    /* Challenge */
-    .challenge-box { background: #f8fafc; border: 1px dashed #94a3b8; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
-    .hint-box { font-size: 0.85rem; color: #475569; background: #fef3c7; padding: 8px; border-radius: 6px; margin-top: 6px; display: none; line-height: 1.4; }
-    
+    /* Challenge Box */
+    .challenge-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .context-status { font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .target-ja-box { font-size: 1.05rem; font-weight: 700; color: #1e293b; background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; padding: 10px; margin-bottom: 8px; line-height: 1.4; }
+    .target-en-box { font-size: 0.95rem; font-weight: 600; color: #1e40af; background: #dbeafe; border-radius: 6px; padding: 8px; margin-top: 8px; display: none; }
+
     /* Assessment Badges */
     .words-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .word-badge { padding: 3px 6px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .word-badge { padding: 3px 6px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.88rem; }
     .score-good { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .score-bad { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
@@ -84,7 +88,7 @@
 </head>
 <body>
 
-  <h1>📺 YouTube Dictation Trainer</h1>
+  <h1>🎬 Context Shadowing & 英作文</h1>
 
   <!-- 1. Azure 設定 -->
   <details class="card">
@@ -100,7 +104,7 @@
 
   <!-- 2. YouTube URL & プレイヤー -->
   <div class="card">
-    <div class="card-title">1. YouTube 動画の読み込み</div>
+    <div class="card-title">1. YouTube 動画</div>
     <div class="row">
       <input type="text" id="ytUrl" placeholder="URLを貼り付け（例: https://youtu.be/...）" style="flex:1;">
       <button onclick="loadYouTubeVideo()">読み込む</button>
@@ -115,10 +119,10 @@
     </div>
   </div>
 
-  <!-- 3. 文字起こし取り込み & シャドーイング連動 -->
+  <!-- 3. 文字起こし（字幕連動 & 目隠し） -->
   <div class="card">
     <div class="card-title">
-      <span>2. 文字起こし（1文ごとに自動結合）</span>
+      <span>2. 字幕スクリプト</span>
       <div style="display:flex; align-items:center; gap:6px;">
         <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 文</span>
         <button class="secondary small" id="toggleSubVisibilityBtn" onclick="toggleSubtitleVisibility()">👁️ 字幕を隠す</button>
@@ -128,44 +132,45 @@
     <details id="transcriptDetails" open style="margin-bottom:8px;">
       <summary style="font-size:0.85rem; color:var(--primary); cursor:pointer;">📋 文字起こしを貼り付ける</summary>
       <div style="margin-top:6px;">
-        <textarea id="transcriptInput" style="min-height:75px;" placeholder="文字起こしテキストをここに貼り付けてください..."></textarea>
+        <textarea id="transcriptInput" style="min-height:65px;" placeholder="文字起こしテキストをここに貼り付けてください..."></textarea>
         <button class="secondary small" style="margin-top:4px;" onclick="parseRawTranscript()">文字起こしを反映</button>
       </div>
     </details>
 
     <div class="subtitle-wrapper">
       <div class="subtitle-list" id="subtitleList">
-        <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">文字起こしを反映すると、文単位でまとまって表示されます。</div>
+        <div style="color:#94a3b8; font-size:0.82rem; padding:6px;">文字起こしを反映すると文単位で表示されます。</div>
       </div>
     </div>
   </div>
 
-  <!-- 4. ディクテーション特訓 -->
+  <!-- 4. Plang風：文脈英作文特訓 -->
   <div class="card">
     <div class="card-title">
-      <span>3. ディクテーション特訓</span>
-      <button onclick="pickRandomSentence()">🎲 1文出題</button>
+      <span>3. 文脈英作文特訓（Plang風）</span>
+      <button class="accent" onclick="pickRandomSentence()">🎲 前後付きで出題</button>
     </div>
 
     <div class="challenge-box">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <span style="font-weight:600; font-size:0.85rem; color:#475569;">🎧 課題センテンス</span>
-        <div>
-          <button class="secondary small" onclick="playCurrentChallenge()">🔁 この文を再生</button>
-          <button class="secondary small" onclick="toggleHint()">💡 全文和訳</button>
-        </div>
+      <div class="context-status">
+        <span id="challengeStatus">「🎲 前後付きで出題」を押してください</span>
+        <button class="secondary small" id="replayContextBtn" style="display:none;" onclick="playContextLeadIn()">🔁 前後から聞き直す</button>
       </div>
-      <div class="hint-box" id="hintBox">
-        <span id="hintText">翻訳を読み込み中...</span>
-      </div>
+      
+      <!-- 日本語お題 -->
+      <div class="target-ja-box" id="targetJaBox">日本語のお題がここに表示されます</div>
+      
+      <!-- 正解の英文（判定後にオープン） -->
+      <div class="target-en-box" id="targetEnBox"></div>
     </div>
 
-    <textarea id="userInput" placeholder="聞き取った英文を入力、または音声入力..."></textarea>
+    <textarea id="userInput" placeholder="お題の英語を入力、またはマイクで音声入力..."></textarea>
     
     <div class="row" style="margin-top:6px;">
       <button class="secondary small" id="sttBtn" onclick="toggleSTT()">🎙️ 音声入力</button>
-      <button onclick="checkAnswer()">📝 判定＆保存</button>
-      <button class="secondary small" onclick="assessPronunciation()">🎯 発音チェック</button>
+      <button onclick="checkAnswer()">📝 判定する</button>
+      <button class="secondary small" id="playAnswerAudioBtn" style="display:none;" onclick="playAnswerAudio()">▶️ 答えの音声を聞く</button>
+      <button class="secondary small" id="pronounceBtn" style="display:none;" onclick="assessPronunciation()">🎯 発音チェック</button>
     </div>
 
     <div id="resultBox" style="margin-top:6px; font-size:0.88rem;"></div>
@@ -184,10 +189,10 @@
   <script>
     let ytPlayer = null;
     let sentences = [];
+    let currentIdx = -1;
     let currentChallenge = null;
     let timeTrackingTimer = null;
-    let challengeStopInterval = null;
-    let challengeTimeout = null;
+    let contextPauseTimer = null;
     let isSubtitlesHidden = false;
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -293,7 +298,7 @@
       }
     }
 
-    // --- 文字起こしパース＆1文まとめ（センテンス化）ロジック ---
+    // --- 文字起こしパース ---
     function parseRawTranscript() {
       const raw = document.getElementById('transcriptInput').value.trim();
       if (!raw) return;
@@ -322,12 +327,10 @@
 
       if (rawTokens.length === 0) return alert('タイムスタンプが見つかりませんでした。');
 
-      // 各行の終了秒数を概算
       for (let i = 0; i < rawTokens.length; i++) {
         rawTokens[i].end = (i < rawTokens.length - 1) ? rawTokens[i+1].start : rawTokens[i].start + 4;
       }
 
-      // 「文末のピリオド・感嘆符・疑問符」または「一定の長さ」でひとまとまりに結合
       sentences = [];
       let currentSentence = null;
 
@@ -350,7 +353,6 @@
         const hasSentenceEnd = /[.?!]["']?$/.test(trimmed);
         const isLongEnough = currentSentence.tokenCount >= 3 || trimmed.split(/\s+/).length >= 8;
 
-        // 文末記号があるか、または3行以上/8単語以上合体したら1文として確定
         if (hasSentenceEnd || isLongEnough || i === rawTokens.length - 1) {
           sentences.push(currentSentence);
           currentSentence = null;
@@ -359,7 +361,7 @@
 
       renderSubtitles();
       document.getElementById('transcriptDetails').removeAttribute('open');
-      alert(`${sentences.length} 個の自然な文として取り込みました！`);
+      alert(`${sentences.length} 文を取り込みました！`);
     }
 
     function timeToSeconds(t) {
@@ -380,7 +382,7 @@
         div.id = `sub-${idx}`;
         div.innerHTML = `<span class="sub-time">${formatTime(s.start)}</span>${s.text}`;
         div.onclick = () => {
-          clearChallengeTimers();
+          clearInterval(contextPauseTimer);
           if (ytPlayer && ytPlayer.seekTo) {
             ytPlayer.seekTo(s.start, true);
             ytPlayer.playVideo();
@@ -396,87 +398,100 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // --- ディクテーション出題 & 区間再生 ---
+    // --- Plang風 文脈英作文 出題ロジック ---
     function pickRandomSentence() {
       if (sentences.length === 0) return alert('先に文字起こしを反映してください。');
-      const randomIdx = Math.floor(Math.random() * sentences.length);
-      currentChallenge = sentences[randomIdx];
+      
+      // 最初の1文以外からランダム選択（前後の文脈を取りやすくするため）
+      currentIdx = sentences.length > 1 ? Math.floor(Math.random() * (sentences.length - 1)) + 1 : 0;
+      currentChallenge = sentences[currentIdx];
 
+      // UIリセット
       document.getElementById('userInput').value = '';
       document.getElementById('resultBox').innerHTML = '';
       document.getElementById('wordsContainer').innerHTML = '';
-      document.getElementById('hintBox').style.display = 'none';
+      document.getElementById('targetEnBox').style.display = 'none';
+      document.getElementById('playAnswerAudioBtn').style.display = 'none';
+      document.getElementById('pronounceBtn').style.display = 'none';
+      document.getElementById('replayContextBtn').style.display = 'inline-flex';
+      document.getElementById('targetJaBox').innerText = 'お題を翻訳中...';
 
-      // 全文和訳
+      // 全文和訳取得
       fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(currentChallenge.text)}`)
         .then(r => r.json())
         .then(data => {
           if (data && data[0]) {
             const fullTranslation = data[0].map(item => item[0]).filter(Boolean).join('');
-            document.getElementById('hintText').innerText = fullTranslation || '翻訳なし';
-          } else {
-            document.getElementById('hintText').innerText = 'ヒントなし';
+            document.getElementById('targetJaBox').innerText = fullTranslation || '（翻訳なし）';
           }
         })
         .catch(() => {
-          document.getElementById('hintText').innerText = 'ヒント取得失敗';
+          document.getElementById('targetJaBox').innerText = '（お題の翻訳取得に失敗しました）';
         });
 
-      playCurrentChallenge();
+      playContextLeadIn();
     }
 
-    function clearChallengeTimers() {
-      if (challengeStopInterval) clearInterval(challengeStopInterval);
-      if (challengeTimeout) clearTimeout(challengeTimeout);
-      challengeStopInterval = null;
-      challengeTimeout = null;
-    }
-
-    function playCurrentChallenge() {
+    // 前後の文脈から再生し、課題の直前で一時停止する
+    function playContextLeadIn() {
       if (!currentChallenge || !ytPlayer || !ytPlayer.seekTo) return;
-      clearChallengeTimers();
+      clearInterval(contextPauseTimer);
 
-      const startTime = currentChallenge.start;
-      const endTime = currentChallenge.end;
-      const durationMs = Math.max(1000, (endTime - startTime) * 1000);
+      // 直前の文があればそこから、なければ課題の約6秒前から再生
+      let leadStart = Math.max(0, currentChallenge.start - 6);
+      if (currentIdx > 0) {
+        leadStart = sentences[currentIdx - 1].start;
+      }
 
-      ytPlayer.seekTo(startTime, true);
+      document.getElementById('challengeStatus').innerText = '🎧 前後の会話を再生中...';
+      ytPlayer.seekTo(leadStart, true);
       ytPlayer.playVideo();
 
-      challengeStopInterval = setInterval(() => {
-        if (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime() >= endTime) {
+      // ターゲット文の開始秒数に到達したら一時停止
+      const targetStart = currentChallenge.start;
+      contextPauseTimer = setInterval(() => {
+        if (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime() >= targetStart) {
           ytPlayer.pauseVideo();
-          clearChallengeTimers();
+          clearInterval(contextPauseTimer);
+          document.getElementById('challengeStatus').innerText = '🛑 一時停止中：日本語を英語で表現してください！';
         }
       }, 50);
-
-      challengeTimeout = setTimeout(() => {
-        if (ytPlayer.pauseVideo) ytPlayer.pauseVideo();
-        clearChallengeTimers();
-      }, durationMs + 200);
     }
 
-    function toggleHint() {
-      const h = document.getElementById('hintBox');
-      h.style.display = h.style.display === 'none' ? 'block' : 'none';
+    // 答え合わせ後に「本物の音声」を聞く
+    function playAnswerAudio() {
+      if (!currentChallenge || !ytPlayer || !ytPlayer.seekTo) return;
+      clearInterval(contextPauseTimer);
+      ytPlayer.seekTo(currentChallenge.start, true);
+      ytPlayer.playVideo();
     }
 
+    // --- 回答チェック ---
     function clean(str) {
       return str.toLowerCase().replace(/[.,?!'"]/g, '').trim();
     }
 
     function checkAnswer() {
-      if (!currentChallenge) return;
+      if (!currentChallenge) return alert('先に出題ボタンを押してください。');
       const user = document.getElementById('userInput').value.trim();
       const isMatch = clean(user) === clean(currentChallenge.text);
 
+      // 正解英文をオープン表示
+      const enBox = document.getElementById('targetEnBox');
+      enBox.innerText = `正解: ${currentChallenge.text}`;
+      enBox.style.display = 'block';
+
+      // 音声再生ボタン & 発音チェックボタンを有効化
+      document.getElementById('playAnswerAudioBtn').style.display = 'inline-flex';
+      document.getElementById('pronounceBtn').style.display = 'inline-flex';
+
       const resBox = document.getElementById('resultBox');
       if (isMatch) {
-        resBox.innerHTML = '<span style="color:var(--success); font-weight:700;">🎉 正解！パーフェクトです！</span>';
+        resBox.innerHTML = '<span style="color:var(--success); font-weight:700;">🎉 パーフェクト！一致しています！</span>';
       } else {
         resBox.innerHTML = `
-          <div style="color:var(--danger); font-weight:600;">⚠️ 不正解 / 差分あり</div>
-          <div style="font-size:0.85rem; margin-top:4px; color:#334155;">正解: <strong>${currentChallenge.text}</strong></div>
+          <div style="color:var(--danger); font-weight:600;">差分・別表現の確認</div>
+          <div style="font-size:0.85rem; color:#475569; margin-top:2px;">あなたの回答: <strong>${user || '(未入力)'}</strong></div>
         `;
       }
 
@@ -506,9 +521,9 @@
       container.innerHTML = history.map(h => `
         <div class="history-item">
           <div>
-            <span class="history-tag ${h.correct ? 'tag-correct' : 'tag-wrong'}">${h.correct ? '正解' : '要復習'}</span>
+            <span class="history-tag ${h.correct ? 'tag-correct' : 'tag-wrong'}">${h.correct ? '一致' : '要復習'}</span>
             <strong>${h.target}</strong>
-            <div style="color:#64748b; font-size:0.8rem; margin-top:2px;">あなたの回答: ${h.user}</div>
+            <div style="color:#64748b; font-size:0.8rem; margin-top:2px;">回答: ${h.user}</div>
           </div>
           <span style="color:#94a3b8; font-size:0.75rem;">${h.date}</span>
         </div>
@@ -522,6 +537,7 @@
       }
     }
 
+    // --- 音声入力 ---
     let recognition = null;
     let isRecording = false;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -540,14 +556,15 @@
       if (isRecording) recognition.stop(); else recognition.start();
     }
 
+    // --- 独立した Azure 発音チェック ---
     async function assessPronunciation() {
       if (!currentChallenge) return alert('先に出題ボタンを押してください');
       const key = document.getElementById('azureKey').value.trim();
       const region = document.getElementById('azureRegion').value.trim();
-      if (!key || !region) return alert('上の設定欄にAzureキーを入れてください');
+      if (!key || !region) return alert('画面上部の「Azure API 設定」にキーを入力してください');
 
       const wordsContainer = document.getElementById('wordsContainer');
-      wordsContainer.innerHTML = '<span style="font-size:0.85rem; color:#64748b;">🎙️ 発音してください...</span>';
+      wordsContainer.innerHTML = '<span style="font-size:0.85rem; color:#2563eb; font-weight:600;">🎙️ 正解の文をマイクに向かって発音してください...</span>';
 
       try {
         const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(key, region);
@@ -568,7 +585,7 @@
             const resJson = JSON.parse(result.properties.getProperty(SpeechSDK.PropertyId.SpeechServiceResponse_JsonResult));
             renderAssessmentWords(resJson);
           } else {
-            wordsContainer.innerHTML = '<span style="color:var(--danger); font-size:0.85rem;">認識できませんでした</span>';
+            wordsContainer.innerHTML = '<span style="color:var(--danger); font-size:0.85rem;">音声を認識できませんでした。もう一度お試しください。</span>';
           }
           recognizer.close();
         });
@@ -583,6 +600,15 @@
       container.innerHTML = '';
       const words = data?.NBest?.[0]?.Words;
       if (!words) return;
+
+      const accuracy = data?.NBest?.[0]?.PronunciationAssessment?.AccuracyScore || 0;
+      const summaryDiv = document.createElement('div');
+      summaryDiv.style.width = '100%';
+      summaryDiv.style.fontSize = '0.85rem';
+      summaryDiv.style.fontWeight = '600';
+      summaryDiv.style.marginBottom = '4px';
+      summaryDiv.innerText = `総合発音スコア: ${accuracy}点`;
+      container.appendChild(summaryDiv);
 
       words.forEach(w => {
         const score = w.PronunciationAssessment.AccuracyScore;

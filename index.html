@@ -119,10 +119,10 @@
     </div>
   </div>
 
-  <!-- 3. 文字起こし（字幕連動 & 目隠し） -->
+  <!-- 3. 文字起こし（完全な文ごとに連結） -->
   <div class="card">
     <div class="card-title">
-      <span>2. 字幕スクリプト</span>
+      <span>2. 字幕スクリプト（1文ごとに連結）</span>
       <div style="display:flex; align-items:center; gap:6px;">
         <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 文</span>
         <button class="secondary small" id="toggleSubVisibilityBtn" onclick="toggleSubtitleVisibility()">👁️ 字幕を隠す</button>
@@ -144,10 +144,10 @@
     </div>
   </div>
 
-  <!-- 4. Plang風：文脈英作文特訓 -->
+  <!-- 4. 文脈英作文特訓 -->
   <div class="card">
     <div class="card-title">
-      <span>3. 文脈英作文特訓（Plang風）</span>
+      <span>3. 文脈英作文特訓</span>
       <button class="accent" onclick="pickRandomSentence()">🎲 前後付きで出題</button>
     </div>
 
@@ -160,7 +160,7 @@
       <!-- 日本語お題 -->
       <div class="target-ja-box" id="targetJaBox">日本語のお題がここに表示されます</div>
       
-      <!-- 正解の英文（判定後にオープン） -->
+      <!-- 正解の英文 -->
       <div class="target-en-box" id="targetEnBox"></div>
     </div>
 
@@ -298,7 +298,7 @@
       }
     }
 
-    // --- 文字起こしパース ---
+    // --- ピリオド・疑問符・感嘆符が来るまで完全に連結するパーサー ---
     function parseRawTranscript() {
       const raw = document.getElementById('transcriptInput').value.trim();
       if (!raw) return;
@@ -340,20 +340,19 @@
           currentSentence = {
             start: item.start,
             end: item.end,
-            text: item.text,
-            tokenCount: 1
+            text: item.text
           };
         } else {
           currentSentence.text += ' ' + item.text;
           currentSentence.end = item.end;
-          currentSentence.tokenCount++;
         }
 
         const trimmed = currentSentence.text.trim();
+        // 文末記号（. や ? や !、引用符閉じ含む）で終わっているか判定
         const hasSentenceEnd = /[.?!]["']?$/.test(trimmed);
-        const isLongEnough = currentSentence.tokenCount >= 3 || trimmed.split(/\s+/).length >= 8;
 
-        if (hasSentenceEnd || isLongEnough || i === rawTokens.length - 1) {
+        // 文末記号が来たとき、または最後の行に到達したときだけ1文として確定
+        if (hasSentenceEnd || i === rawTokens.length - 1) {
           sentences.push(currentSentence);
           currentSentence = null;
         }
@@ -361,7 +360,7 @@
 
       renderSubtitles();
       document.getElementById('transcriptDetails').removeAttribute('open');
-      alert(`${sentences.length} 文を取り込みました！`);
+      alert(`${sentences.length} 個の文（ピリオド区切り）として取り込みました！`);
     }
 
     function timeToSeconds(t) {
@@ -398,15 +397,13 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // --- Plang風 文脈英作文 出題ロジック ---
+    // --- 文脈英作文 出題ロジック ---
     function pickRandomSentence() {
       if (sentences.length === 0) return alert('先に文字起こしを反映してください。');
       
-      // 最初の1文以外からランダム選択（前後の文脈を取りやすくするため）
       currentIdx = sentences.length > 1 ? Math.floor(Math.random() * (sentences.length - 1)) + 1 : 0;
       currentChallenge = sentences[currentIdx];
 
-      // UIリセット
       document.getElementById('userInput').value = '';
       document.getElementById('resultBox').innerHTML = '';
       document.getElementById('wordsContainer').innerHTML = '';
@@ -416,7 +413,6 @@
       document.getElementById('replayContextBtn').style.display = 'inline-flex';
       document.getElementById('targetJaBox').innerText = 'お題を翻訳中...';
 
-      // 全文和訳取得
       fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(currentChallenge.text)}`)
         .then(r => r.json())
         .then(data => {
@@ -432,12 +428,10 @@
       playContextLeadIn();
     }
 
-    // 前後の文脈から再生し、課題の直前で一時停止する
     function playContextLeadIn() {
       if (!currentChallenge || !ytPlayer || !ytPlayer.seekTo) return;
       clearInterval(contextPauseTimer);
 
-      // 直前の文があればそこから、なければ課題の約6秒前から再生
       let leadStart = Math.max(0, currentChallenge.start - 6);
       if (currentIdx > 0) {
         leadStart = sentences[currentIdx - 1].start;
@@ -447,7 +441,6 @@
       ytPlayer.seekTo(leadStart, true);
       ytPlayer.playVideo();
 
-      // ターゲット文の開始秒数に到達したら一時停止
       const targetStart = currentChallenge.start;
       contextPauseTimer = setInterval(() => {
         if (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime() >= targetStart) {
@@ -458,7 +451,6 @@
       }, 50);
     }
 
-    // 答え合わせ後に「本物の音声」を聞く
     function playAnswerAudio() {
       if (!currentChallenge || !ytPlayer || !ytPlayer.seekTo) return;
       clearInterval(contextPauseTimer);
@@ -466,7 +458,6 @@
       ytPlayer.playVideo();
     }
 
-    // --- 回答チェック ---
     function clean(str) {
       return str.toLowerCase().replace(/[.,?!'"]/g, '').trim();
     }
@@ -476,12 +467,10 @@
       const user = document.getElementById('userInput').value.trim();
       const isMatch = clean(user) === clean(currentChallenge.text);
 
-      // 正解英文をオープン表示
       const enBox = document.getElementById('targetEnBox');
       enBox.innerText = `正解: ${currentChallenge.text}`;
       enBox.style.display = 'block';
 
-      // 音声再生ボタン & 発音チェックボタンを有効化
       document.getElementById('playAnswerAudioBtn').style.display = 'inline-flex';
       document.getElementById('pronounceBtn').style.display = 'inline-flex';
 
@@ -537,7 +526,6 @@
       }
     }
 
-    // --- 音声入力 ---
     let recognition = null;
     let isRecording = false;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -556,7 +544,6 @@
       if (isRecording) recognition.stop(); else recognition.start();
     }
 
-    // --- 独立した Azure 発音チェック ---
     async function assessPronunciation() {
       if (!currentChallenge) return alert('先に出題ボタンを押してください');
       const key = document.getElementById('azureKey').value.trim();

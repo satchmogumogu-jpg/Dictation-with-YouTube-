@@ -50,7 +50,7 @@
     /* Subtitle Container */
     .subtitle-wrapper { position: relative; }
     .subtitle-list {
-      max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: #fafafa;
+      max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: #fafafa;
       transition: filter 0.2s;
     }
     .subtitle-list.hidden-mode {
@@ -64,6 +64,9 @@
     .sub-item:hover { background: #edf2f7; }
     .sub-item.active { background: var(--highlight); font-weight: 600; color: #1e40af; border-left: 4px solid var(--primary); }
     .sub-time { font-size: 0.75rem; color: #94a3b8; margin-right: 6px; }
+    .sub-en { font-weight: 500; line-height: 1.35; }
+    .sub-ja { font-size: 0.78rem; color: #64748b; margin-top: 2px; line-height: 1.3; font-weight: normal; }
+    .hide-ja .sub-ja { display: none !important; }
 
     /* Challenge Box */
     .challenge-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
@@ -119,13 +122,14 @@
     </div>
   </div>
 
-  <!-- 3. 文字起こし（バイリンガル対応） -->
+  <!-- 3. 文字起こし（バイリンガル対応＆日本語切替） -->
   <div class="card">
     <div class="card-title">
       <span>2. 字幕スクリプト（1文ごと）</span>
-      <div style="display:flex; align-items:center; gap:6px;">
-        <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 文</span>
-        <button class="secondary small" id="toggleSubVisibilityBtn" onclick="toggleSubtitleVisibility()">👁️ 字幕を隠す</button>
+      <div style="display:flex; align-items:center; gap:4px;">
+        <span id="subCount" style="font-size:0.8rem; color:#94a3b8; margin-right:4px;">0 文</span>
+        <button class="secondary small" id="toggleJaBtn" onclick="toggleJaSubtitle()">🇯🇵 和訳: ON</button>
+        <button class="secondary small" id="toggleSubVisibilityBtn" onclick="toggleSubtitleVisibility()">👁️ 隠す</button>
       </div>
     </div>
     
@@ -157,7 +161,7 @@
         <button class="secondary small" id="replayContextBtn" style="display:none;" onclick="playContextLeadIn()">🔁 前後から聞き直す</button>
       </div>
       
-      <!-- 日本語お題（Gemの自然な和訳が即座に出る） -->
+      <!-- 日本語お題 -->
       <div class="target-ja-box" id="targetJaBox">日本語のお題がここに表示されます</div>
       
       <!-- 正解の英文 -->
@@ -194,6 +198,7 @@
     let timeTrackingTimer = null;
     let contextPauseTimer = null;
     let isSubtitlesHidden = false;
+    let showJapaneseSubtitle = true;
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('azureKey').value = localStorage.getItem('azure_speech_key') || '';
@@ -207,16 +212,31 @@
       alert('設定を保存しました');
     }
 
+    // 字幕全体の目隠し切替
     function toggleSubtitleVisibility() {
       isSubtitlesHidden = !isSubtitlesHidden;
       const list = document.getElementById('subtitleList');
       const btn = document.getElementById('toggleSubVisibilityBtn');
       if (isSubtitlesHidden) {
         list.classList.add('hidden-mode');
-        btn.innerText = '👁️‍🗨️ 字幕を表示';
+        btn.innerText = '👁️ 表示';
       } else {
         list.classList.remove('hidden-mode');
-        btn.innerText = '👁️ 字幕を隠す';
+        btn.innerText = '👁️ 隠す';
+      }
+    }
+
+    // 日本語字幕の表示/非表示切替
+    function toggleJaSubtitle() {
+      showJapaneseSubtitle = !showJapaneseSubtitle;
+      const list = document.getElementById('subtitleList');
+      const btn = document.getElementById('toggleJaBtn');
+      if (showJapaneseSubtitle) {
+        list.classList.remove('hide-ja');
+        btn.innerText = '🇯🇵 和訳: ON';
+      } else {
+        list.classList.add('hide-ja');
+        btn.innerText = '🇯🇵 和訳: OFF';
       }
     }
 
@@ -298,7 +318,7 @@
       }
     }
 
-    // --- バイリンガル対応パーサー（英語と日本語を分離） ---
+    // --- バイリンガル対応パーサー ---
     function parseRawTranscript() {
       const raw = document.getElementById('transcriptInput').value.trim();
       if (!raw) return;
@@ -317,7 +337,6 @@
           let en = rest;
           let ja = '';
 
-          // 「 | 」または「 |」で英語と日本語が区切られているかチェック
           if (rest.includes('|')) {
             const parts = rest.split('|');
             en = parts[0].trim();
@@ -327,8 +346,8 @@
           if (en) {
             sentences.push({
               start: sec,
-              text: en,      // 英語（判定・発音用）
-              translation: ja // 日本語（お題用）
+              text: en,
+              translation: ja
             });
           }
         }
@@ -336,7 +355,6 @@
 
       if (sentences.length === 0) return alert('タイムスタンプが見つかりませんでした。');
 
-      // 終了秒数の設定
       for (let i = 0; i < sentences.length; i++) {
         sentences[i].end = (i < sentences.length - 1) ? sentences[i+1].start : sentences[i].start + 4;
       }
@@ -362,8 +380,13 @@
         const div = document.createElement('div');
         div.className = 'sub-item';
         div.id = `sub-${idx}`;
-        // スクリプト一覧には「英語のみ」をスマートに表示
-        div.innerHTML = `<span class="sub-time">${formatTime(s.start)}</span>${s.text}`;
+        
+        // 英語の下に小さめの日本語字幕を配置
+        div.innerHTML = `
+          <div class="sub-en"><span class="sub-time">${formatTime(s.start)}</span>${s.text}</div>
+          ${s.translation ? `<div class="sub-ja">${s.translation}</div>` : ''}
+        `;
+        
         div.onclick = () => {
           clearInterval(contextPauseTimer);
           if (ytPlayer && ytPlayer.seekTo) {
@@ -396,11 +419,9 @@
       document.getElementById('pronounceBtn').style.display = 'none';
       document.getElementById('replayContextBtn').style.display = 'inline-flex';
 
-      // 1. Gemの日本語訳がある場合は即座に表示（待ち時間ゼロ）
       if (currentChallenge.translation) {
         document.getElementById('targetJaBox').innerText = currentChallenge.translation;
       } else {
-        // 2. 日本語訳がない古い形式の場合はGoogle翻訳に問い合わせ
         document.getElementById('targetJaBox').innerText = 'お題を翻訳中...';
         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(currentChallenge.text)}`)
           .then(r => r.json())

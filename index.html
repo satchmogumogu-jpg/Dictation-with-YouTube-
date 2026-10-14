@@ -6,8 +6,6 @@
   <title>YouTube Speaking & Dictation Trainer</title>
   <!-- YouTube IFrame API -->
   <script src="https://www.youtube.com/iframe_api"></script>
-  <!-- Azure Speech SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
   <style>
     :root {
       --bg: #f8fafc;
@@ -27,7 +25,7 @@
     .card-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #334155; display: flex; justify-content: space-between; align-items: center; }
     
     .row { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
-    input[type="text"], input[type="password"], textarea {
+    input[type="text"], textarea {
       width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;
     }
     textarea { resize: vertical; min-height: 55px; }
@@ -74,9 +72,9 @@
     .target-ja-box { font-size: 1.05rem; font-weight: 700; color: #1e293b; background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; padding: 10px; margin-bottom: 8px; line-height: 1.4; }
     .target-en-box { font-size: 0.95rem; font-weight: 600; color: #1e40af; background: #dbeafe; border-radius: 6px; padding: 8px; margin-top: 8px; display: none; }
 
-    /* Assessment Badges */
+    /* Pronunciation Check Badges */
     .words-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .word-badge { padding: 3px 6px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.88rem; }
+    .word-badge { padding: 3px 7px; border-radius: 4px; font-weight: 600; font-size: 0.88rem; }
     .score-good { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .score-bad { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
@@ -93,19 +91,7 @@
 
   <h1>🎬 Context Shadowing & 英作文</h1>
 
-  <!-- 1. Azure 設定 -->
-  <details class="card">
-    <summary style="font-weight:600; cursor:pointer; color:#64748b; font-size:0.85rem;">⚙️ Azure API 設定</summary>
-    <div style="margin-top: 8px;">
-      <div class="row">
-        <input type="password" id="azureKey" placeholder="Azure Speech Key">
-        <input type="text" id="azureRegion" placeholder="Region (例: japaneast)" style="max-width: 140px;">
-        <button class="secondary small" onclick="saveConfig()">保存</button>
-      </div>
-    </div>
-  </details>
-
-  <!-- 2. YouTube URL & プレイヤー -->
+  <!-- 1. YouTube 動画 -->
   <div class="card">
     <div class="card-title">1. YouTube 動画</div>
     <div class="row">
@@ -122,7 +108,7 @@
     </div>
   </div>
 
-  <!-- 3. 文字起こし -->
+  <!-- 2. 字幕スクリプト -->
   <div class="card">
     <div class="card-title">
       <span>2. 字幕スクリプト（1文ごと）</span>
@@ -148,7 +134,7 @@
     </div>
   </div>
 
-  <!-- 4. 文脈英作文特訓 -->
+  <!-- 3. 文脈英作文特訓 -->
   <div class="card">
     <div class="card-title">
       <span>3. 文脈英作文特訓</span>
@@ -175,14 +161,14 @@
       <button onclick="checkAnswer()">📝 判定する</button>
       <button class="secondary small" id="copyPromptBtn" style="display:none;" onclick="copyFeedbackPrompt()">📋 添削文をコピー</button>
       <button class="secondary small" id="playAnswerAudioBtn" style="display:none;" onclick="playAnswerAudio()">▶️ 答えの音声を聞く</button>
-      <button class="secondary small" id="pronounceBtn" style="display:none;" onclick="assessPronunciation()">🎯 発音チェック</button>
+      <button class="secondary small" id="pronounceBtn" style="display:none;" onclick="checkPronunciationWithBrowser()">🎯 発音チェック</button>
     </div>
 
     <div id="resultBox" style="margin-top:6px; font-size:0.88rem;"></div>
     <div class="words-container" id="wordsContainer"></div>
   </div>
 
-  <!-- 5. 復習＆習得履歴 -->
+  <!-- 4. 復習＆習得履歴 -->
   <div class="card">
     <div class="card-title">
       <span>4. 復習履歴</span>
@@ -202,16 +188,8 @@
     let showJapaneseSubtitle = true;
 
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById('azureKey').value = localStorage.getItem('azure_speech_key') || '';
-      document.getElementById('azureRegion').value = localStorage.getItem('azure_speech_region') || 'japaneast';
       renderHistory();
     });
-
-    function saveConfig() {
-      localStorage.setItem('azure_speech_key', document.getElementById('azureKey').value.trim());
-      localStorage.setItem('azure_speech_region', document.getElementById('azureRegion').value.trim());
-      alert('設定を保存しました');
-    }
 
     function toggleSubtitleVisibility() {
       isSubtitlesHidden = !isSubtitlesHidden;
@@ -479,7 +457,6 @@
       enBox.innerText = `正解: ${currentChallenge.text}`;
       enBox.style.display = 'block';
 
-      // 判定後に添削コピーボタンを表示
       document.getElementById('copyPromptBtn').style.display = 'inline-flex';
       document.getElementById('copyPromptBtn').innerText = '📋 添削文をコピー';
       document.getElementById('playAnswerAudioBtn').style.display = 'inline-flex';
@@ -503,7 +480,6 @@
       });
     }
 
-    // --- 添削用プロンプトのクリップボードコピー ---
     function copyFeedbackPrompt() {
       if (!currentChallenge) return;
       const jaText = document.getElementById('targetJaBox').innerText;
@@ -568,6 +544,7 @@ ${userEn}
       }
     }
 
+    // --- 音声入力（回答用） ---
     let recognition = null;
     let isRecording = false;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -586,66 +563,88 @@ ${userEn}
       if (isRecording) recognition.stop(); else recognition.start();
     }
 
-    async function assessPronunciation() {
+    // --- 完全無料：ブラウザ標準の発音チェック ---
+    let pronRecognizer = null;
+    let isPronChecking = false;
+
+    function checkPronunciationWithBrowser() {
       if (!currentChallenge) return alert('先に出題ボタンを押してください');
-      const key = document.getElementById('azureKey').value.trim();
-      const region = document.getElementById('azureRegion').value.trim();
-      if (!key || !region) return alert('画面上部の「Azure API 設定」にキーを入力してください');
-
-      const wordsContainer = document.getElementById('wordsContainer');
-      wordsContainer.innerHTML = '<span style="font-size:0.85rem; color:#2563eb; font-weight:600;">🎙️ 正解の文をマイクに向かって発音してください...</span>';
-
-      try {
-        const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(key, region);
-        speechConfig.speechRecognitionLanguage = "en-US";
-        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-        const pronunciationConfig = new SpeechSDK.PronunciationAssessmentConfig(
-          currentChallenge.text,
-          SpeechSDK.PronunciationAssessmentGradingSystem.HundredMark,
-          SpeechSDK.PronunciationAssessmentGranularity.Phoneme,
-          true
-        );
-
-        const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
-        pronunciationConfig.applyTo(recognizer);
-
-        recognizer.recognizeOnceAsync(result => {
-          if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
-            const resJson = JSON.parse(result.properties.getProperty(SpeechSDK.PropertyId.SpeechServiceResponse_JsonResult));
-            renderAssessmentWords(resJson);
-          } else {
-            wordsContainer.innerHTML = '<span style="color:var(--danger); font-size:0.85rem;">音声を認識できませんでした。もう一度お試しください。</span>';
-          }
-          recognizer.close();
-        });
-      } catch (e) {
-        console.error(e);
-        wordsContainer.innerHTML = 'エラーが発生しました';
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        return alert('お使いのブラウザは音声認識に対応していません（Chrome推奨）');
       }
+
+      const pronBtn = document.getElementById('pronounceBtn');
+      const wordsContainer = document.getElementById('wordsContainer');
+
+      if (isPronChecking && pronRecognizer) {
+        pronRecognizer.stop();
+        return;
+      }
+
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      pronRecognizer = new SR();
+      pronRecognizer.lang = 'en-US';
+      pronRecognizer.continuous = false;
+      pronRecognizer.interimResults = false;
+
+      pronRecognizer.onstart = () => {
+        isPronChecking = true;
+        pronBtn.innerText = '⏹️ 発音を聞き取り中...';
+        wordsContainer.innerHTML = '<span style="font-size:0.85rem; color:#2563eb; font-weight:600;">🎙️ 正解の文をマイクに向かって発音してください...</span>';
+      };
+
+      pronRecognizer.onresult = (e) => {
+        const spoken = e.results[0][0].transcript;
+        renderBrowserPronAssessment(spoken, currentChallenge.text);
+      };
+
+      pronRecognizer.onerror = (e) => {
+        wordsContainer.innerHTML = '<span style="color:var(--danger); font-size:0.85rem;">音声を認識できませんでした。もう一度お試しください。</span>';
+      };
+
+      pronRecognizer.onend = () => {
+        isPronChecking = false;
+        pronBtn.innerText = '🎯 発音チェック';
+      };
+
+      pronRecognizer.start();
     }
 
-    function renderAssessmentWords(data) {
+    function renderBrowserPronAssessment(spokenText, targetText) {
       const container = document.getElementById('wordsContainer');
       container.innerHTML = '';
-      const words = data?.NBest?.[0]?.Words;
-      if (!words) return;
 
-      const accuracy = data?.NBest?.[0]?.PronunciationAssessment?.AccuracyScore || 0;
-      const summaryDiv = document.createElement('div');
-      summaryDiv.style.width = '100%';
-      summaryDiv.style.fontSize = '0.85rem';
-      summaryDiv.style.fontWeight = '600';
-      summaryDiv.style.marginBottom = '4px';
-      summaryDiv.innerText = `総合発音スコア: ${accuracy}点`;
-      container.appendChild(summaryDiv);
+      const targetWords = targetText.split(/\s+/);
+      const cleanSpokenWords = spokenText.toLowerCase().replace(/[.,?!'"]/g, '').split(/\s+/);
 
-      words.forEach(w => {
-        const score = w.PronunciationAssessment.AccuracyScore;
+      let matchedCount = 0;
+      const wordBadges = [];
+
+      targetWords.forEach(w => {
+        const cleanW = clean(w);
+        const isMatched = cleanSpokenWords.includes(cleanW);
+        if (isMatched) matchedCount++;
+
         const span = document.createElement('span');
-        span.className = `word-badge ${score >= 70 ? 'score-good' : 'score-bad'}`;
-        span.innerText = `${w.Word} (${score}点)`;
-        container.appendChild(span);
+        span.className = `word-badge ${isMatched ? 'score-good' : 'score-bad'}`;
+        span.innerText = w;
+        wordBadges.push(span);
       });
+
+      const score = Math.round((matchedCount / targetWords.length) * 100);
+
+      const header = document.createElement('div');
+      header.style.width = '100%';
+      header.style.fontSize = '0.85rem';
+      header.style.fontWeight = '600';
+      header.style.marginBottom = '6px';
+      header.innerHTML = `
+        <div>🎯 通じた割合: <strong>${score}%</strong> (${matchedCount}/${targetWords.length} 単語)</div>
+        <div style="font-size:0.78rem; color:#64748b; font-weight:normal; margin-top:2px;">聞き取られた音声: "${spokenText}"</div>
+      `;
+      container.appendChild(header);
+
+      wordBadges.forEach(b => container.appendChild(b));
     }
   </script>
 </body>

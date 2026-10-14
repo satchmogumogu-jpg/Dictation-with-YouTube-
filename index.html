@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Speaking & Dictation Trainer</title>
+  <title>YouTubeで英語トレーニング</title>
   <!-- YouTube IFrame API -->
   <script src="https://www.youtube.com/iframe_api"></script>
   <style>
@@ -25,9 +25,10 @@
     .card-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: #334155; display: flex; justify-content: space-between; align-items: center; }
     
     .row { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
-    input[type="text"], textarea {
+    input[type="text"], select, textarea {
       width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem;
     }
+    select { background: #fff; }
     textarea { resize: vertical; min-height: 55px; }
 
     button {
@@ -39,6 +40,8 @@
     button.secondary:hover { background: #e2e8f0; }
     button.accent { background: #059669; }
     button.accent:hover { background: #047857; }
+    button.danger { background: #fee2e2; color: var(--danger); border: 1px solid #fca5a5; }
+    button.danger:hover { background: #fecaca; }
     button.small { padding: 4px 8px; font-size: 0.8rem; }
 
     /* Video Player */
@@ -90,6 +93,20 @@
 <body>
 
   <h1>🎬 YouTubeで英語トレーニング</h1>
+
+  <!-- 0. プリセット保存・選択ライブラリ -->
+  <div class="card" style="background: #f0fdf4; border-color: #bbf7d0;">
+    <div class="card-title" style="color: #166534;">
+      <span>📚 保存した教材（プリセット）</span>
+    </div>
+    <div class="row">
+      <select id="presetSelect" onchange="loadSelectedPreset()" style="flex:1;">
+        <option value="">-- 教材を選択してください --</option>
+      </select>
+      <button class="danger small" onclick="deleteSelectedPreset()">🗑️ 削除</button>
+    </div>
+    <button class="secondary small" style="width: 100%; margin-top: 4px;" onclick="saveCurrentAsPreset()">💾 現在の動画＆字幕をプリセット保存</button>
+  </div>
 
   <!-- 1. YouTube 動画 -->
   <div class="card">
@@ -188,9 +205,75 @@
     let showJapaneseSubtitle = true;
 
     document.addEventListener("DOMContentLoaded", () => {
+      renderPresets();
       renderHistory();
     });
 
+    // --- プリセット管理 ---
+    function getPresets() {
+      return JSON.parse(localStorage.getItem('yt_presets') || '[]');
+    }
+
+    function renderPresets() {
+      const presets = getPresets();
+      const select = document.getElementById('presetSelect');
+      select.innerHTML = '<option value="">-- 教材を選択してください --</option>';
+      presets.forEach((p, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = p.title;
+        select.appendChild(opt);
+      });
+    }
+
+    function saveCurrentAsPreset() {
+      const url = document.getElementById('ytUrl').value.trim();
+      const transcript = document.getElementById('transcriptInput').value.trim();
+
+      if (!url) return alert('YouTubeのURLが入力されていません。');
+      if (!transcript) return alert('文字起こしテキストがありません。');
+
+      const title = prompt('教材の名前を入力してください（例: TED 睡眠の話、フレンズ S1E1 など）:');
+      if (!title) return;
+
+      const presets = getPresets();
+      presets.unshift({ title, url, transcript });
+      localStorage.setItem('yt_presets', JSON.stringify(presets));
+      renderPresets();
+      alert(`「${title}」をプリセットに保存しました！`);
+    }
+
+    function loadSelectedPreset() {
+      const select = document.getElementById('presetSelect');
+      const idx = select.value;
+      if (idx === "") return;
+
+      const presets = getPresets();
+      const p = presets[idx];
+      if (!p) return;
+
+      document.getElementById('ytUrl').value = p.url;
+      document.getElementById('transcriptInput').value = p.transcript;
+
+      loadYouTubeVideo();
+      parseRawTranscript();
+    }
+
+    function deleteSelectedPreset() {
+      const select = document.getElementById('presetSelect');
+      const idx = select.value;
+      if (idx === "") return alert('削除する教材を選択してください。');
+
+      const presets = getPresets();
+      const target = presets[idx];
+      if (!confirm(`「${target.title}」を削除しますか？`)) return;
+
+      presets.splice(idx, 1);
+      localStorage.setItem('yt_presets', JSON.stringify(presets));
+      renderPresets();
+    }
+
+    // --- 字幕・UI表示 ---
     function toggleSubtitleVisibility() {
       isSubtitlesHidden = !isSubtitlesHidden;
       const list = document.getElementById('subtitleList');
@@ -295,7 +378,7 @@
       }
     }
 
-    // --- バイリンガル対応パーサー ---
+    // --- パーサー ---
     function parseRawTranscript() {
       const raw = document.getElementById('transcriptInput').value.trim();
       if (!raw) return;
@@ -338,7 +421,6 @@
 
       renderSubtitles();
       document.getElementById('transcriptDetails').removeAttribute('open');
-      alert(`${sentences.length} 文の教材データを取り込みました！`);
     }
 
     function timeToSeconds(t) {
@@ -378,7 +460,7 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // --- 文脈英作文 出題ロジック ---
+    // --- 文脈英作文 出題 ---
     function pickRandomSentence() {
       if (sentences.length === 0) return alert('先に文字起こしを反映してください。');
       
@@ -544,7 +626,7 @@ ${userEn}
       }
     }
 
-    // --- 音声入力（回答用） ---
+    // --- 音声入力 ---
     let recognition = null;
     let isRecording = false;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -563,7 +645,7 @@ ${userEn}
       if (isRecording) recognition.stop(); else recognition.start();
     }
 
-    // --- 完全無料：ブラウザ標準の発音チェック ---
+    // --- ブラウザ発音判定 ---
     let pronRecognizer = null;
     let isPronChecking = false;
 

@@ -119,10 +119,10 @@
     </div>
   </div>
 
-  <!-- 3. 文字起こし（完全な文ごとに連結） -->
+  <!-- 3. 文字起こし（バイリンガル対応） -->
   <div class="card">
     <div class="card-title">
-      <span>2. 字幕スクリプト（1文ごとに連結）</span>
+      <span>2. 字幕スクリプト（1文ごと）</span>
       <div style="display:flex; align-items:center; gap:6px;">
         <span id="subCount" style="font-size:0.8rem; color:#94a3b8;">0 文</span>
         <button class="secondary small" id="toggleSubVisibilityBtn" onclick="toggleSubtitleVisibility()">👁️ 字幕を隠す</button>
@@ -132,7 +132,7 @@
     <details id="transcriptDetails" open style="margin-bottom:8px;">
       <summary style="font-size:0.85rem; color:var(--primary); cursor:pointer;">📋 文字起こしを貼り付ける</summary>
       <div style="margin-top:6px;">
-        <textarea id="transcriptInput" style="min-height:65px;" placeholder="文字起こしテキストをここに貼り付けてください..."></textarea>
+        <textarea id="transcriptInput" style="min-height:65px;" placeholder="Gemが生成したテキストをここに貼り付けてください..."></textarea>
         <button class="secondary small" style="margin-top:4px;" onclick="parseRawTranscript()">文字起こしを反映</button>
       </div>
     </details>
@@ -157,7 +157,7 @@
         <button class="secondary small" id="replayContextBtn" style="display:none;" onclick="playContextLeadIn()">🔁 前後から聞き直す</button>
       </div>
       
-      <!-- 日本語お題 -->
+      <!-- 日本語お題（Gemの自然な和訳が即座に出る） -->
       <div class="target-ja-box" id="targetJaBox">日本語のお題がここに表示されます</div>
       
       <!-- 正解の英文 -->
@@ -298,69 +298,52 @@
       }
     }
 
-    // --- ピリオド・疑問符・感嘆符が来るまで完全に連結するパーサー ---
+    // --- バイリンガル対応パーサー（英語と日本語を分離） ---
     function parseRawTranscript() {
       const raw = document.getElementById('transcriptInput').value.trim();
       if (!raw) return;
 
       const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      const rawTokens = [];
+      sentences = [];
 
-      let tempTime = null;
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const timeMatch = line.match(/^(\d{1,2}:)?\d{1,2}:\d{2}/);
 
         if (timeMatch) {
           const sec = timeToSeconds(timeMatch[0]);
-          const text = line.replace(timeMatch[0], '').trim();
-          if (text) {
-            rawTokens.push({ start: sec, text: text });
-          } else {
-            tempTime = sec;
+          let rest = line.replace(timeMatch[0], '').trim();
+          
+          let en = rest;
+          let ja = '';
+
+          // 「 | 」または「 |」で英語と日本語が区切られているかチェック
+          if (rest.includes('|')) {
+            const parts = rest.split('|');
+            en = parts[0].trim();
+            ja = parts.slice(1).join('|').trim();
           }
-        } else if (tempTime !== null) {
-          rawTokens.push({ start: tempTime, text: line });
-          tempTime = null;
+
+          if (en) {
+            sentences.push({
+              start: sec,
+              text: en,      // 英語（判定・発音用）
+              translation: ja // 日本語（お題用）
+            });
+          }
         }
       }
 
-      if (rawTokens.length === 0) return alert('タイムスタンプが見つかりませんでした。');
+      if (sentences.length === 0) return alert('タイムスタンプが見つかりませんでした。');
 
-      for (let i = 0; i < rawTokens.length; i++) {
-        rawTokens[i].end = (i < rawTokens.length - 1) ? rawTokens[i+1].start : rawTokens[i].start + 4;
-      }
-
-      sentences = [];
-      let currentSentence = null;
-
-      for (let i = 0; i < rawTokens.length; i++) {
-        const item = rawTokens[i];
-        if (!currentSentence) {
-          currentSentence = {
-            start: item.start,
-            end: item.end,
-            text: item.text
-          };
-        } else {
-          currentSentence.text += ' ' + item.text;
-          currentSentence.end = item.end;
-        }
-
-        const trimmed = currentSentence.text.trim();
-        // 文末記号（. や ? や !、引用符閉じ含む）で終わっているか判定
-        const hasSentenceEnd = /[.?!]["']?$/.test(trimmed);
-
-        // 文末記号が来たとき、または最後の行に到達したときだけ1文として確定
-        if (hasSentenceEnd || i === rawTokens.length - 1) {
-          sentences.push(currentSentence);
-          currentSentence = null;
-        }
+      // 終了秒数の設定
+      for (let i = 0; i < sentences.length; i++) {
+        sentences[i].end = (i < sentences.length - 1) ? sentences[i+1].start : sentences[i].start + 4;
       }
 
       renderSubtitles();
       document.getElementById('transcriptDetails').removeAttribute('open');
-      alert(`${sentences.length} 個の文（ピリオド区切り）として取り込みました！`);
+      alert(`${sentences.length} 文の教材データを取り込みました！`);
     }
 
     function timeToSeconds(t) {
@@ -379,6 +362,7 @@
         const div = document.createElement('div');
         div.className = 'sub-item';
         div.id = `sub-${idx}`;
+        // スクリプト一覧には「英語のみ」をスマートに表示
         div.innerHTML = `<span class="sub-time">${formatTime(s.start)}</span>${s.text}`;
         div.onclick = () => {
           clearInterval(contextPauseTimer);
@@ -411,19 +395,25 @@
       document.getElementById('playAnswerAudioBtn').style.display = 'none';
       document.getElementById('pronounceBtn').style.display = 'none';
       document.getElementById('replayContextBtn').style.display = 'inline-flex';
-      document.getElementById('targetJaBox').innerText = 'お題を翻訳中...';
 
-      fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(currentChallenge.text)}`)
-        .then(r => r.json())
-        .then(data => {
-          if (data && data[0]) {
-            const fullTranslation = data[0].map(item => item[0]).filter(Boolean).join('');
-            document.getElementById('targetJaBox').innerText = fullTranslation || '（翻訳なし）';
-          }
-        })
-        .catch(() => {
-          document.getElementById('targetJaBox').innerText = '（お題の翻訳取得に失敗しました）';
-        });
+      // 1. Gemの日本語訳がある場合は即座に表示（待ち時間ゼロ）
+      if (currentChallenge.translation) {
+        document.getElementById('targetJaBox').innerText = currentChallenge.translation;
+      } else {
+        // 2. 日本語訳がない古い形式の場合はGoogle翻訳に問い合わせ
+        document.getElementById('targetJaBox').innerText = 'お題を翻訳中...';
+        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(currentChallenge.text)}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data && data[0]) {
+              const fullTranslation = data[0].map(item => item[0]).filter(Boolean).join('');
+              document.getElementById('targetJaBox').innerText = fullTranslation || '（翻訳なし）';
+            }
+          })
+          .catch(() => {
+            document.getElementById('targetJaBox').innerText = '（お題の翻訳取得に失敗しました）';
+          });
+      }
 
       playContextLeadIn();
     }

@@ -122,7 +122,7 @@
     </div>
   </div>
 
-  <!-- 3. 文字起こし（バイリンガル対応＆日本語切替） -->
+  <!-- 3. 文字起こし -->
   <div class="card">
     <div class="card-title">
       <span>2. 字幕スクリプト（1文ごと）</span>
@@ -173,6 +173,7 @@
     <div class="row" style="margin-top:6px;">
       <button class="secondary small" id="sttBtn" onclick="toggleSTT()">🎙️ 音声入力</button>
       <button onclick="checkAnswer()">📝 判定する</button>
+      <button class="secondary small" id="copyPromptBtn" style="display:none;" onclick="copyFeedbackPrompt()">📋 添削文をコピー</button>
       <button class="secondary small" id="playAnswerAudioBtn" style="display:none;" onclick="playAnswerAudio()">▶️ 答えの音声を聞く</button>
       <button class="secondary small" id="pronounceBtn" style="display:none;" onclick="assessPronunciation()">🎯 発音チェック</button>
     </div>
@@ -212,7 +213,6 @@
       alert('設定を保存しました');
     }
 
-    // 字幕全体の目隠し切替
     function toggleSubtitleVisibility() {
       isSubtitlesHidden = !isSubtitlesHidden;
       const list = document.getElementById('subtitleList');
@@ -226,7 +226,6 @@
       }
     }
 
-    // 日本語字幕の表示/非表示切替
     function toggleJaSubtitle() {
       showJapaneseSubtitle = !showJapaneseSubtitle;
       const list = document.getElementById('subtitleList');
@@ -380,13 +379,10 @@
         const div = document.createElement('div');
         div.className = 'sub-item';
         div.id = `sub-${idx}`;
-        
-        // 英語の下に小さめの日本語字幕を配置
         div.innerHTML = `
           <div class="sub-en"><span class="sub-time">${formatTime(s.start)}</span>${s.text}</div>
           ${s.translation ? `<div class="sub-ja">${s.translation}</div>` : ''}
         `;
-        
         div.onclick = () => {
           clearInterval(contextPauseTimer);
           if (ytPlayer && ytPlayer.seekTo) {
@@ -417,6 +413,7 @@
       document.getElementById('targetEnBox').style.display = 'none';
       document.getElementById('playAnswerAudioBtn').style.display = 'none';
       document.getElementById('pronounceBtn').style.display = 'none';
+      document.getElementById('copyPromptBtn').style.display = 'none';
       document.getElementById('replayContextBtn').style.display = 'inline-flex';
 
       if (currentChallenge.translation) {
@@ -482,6 +479,9 @@
       enBox.innerText = `正解: ${currentChallenge.text}`;
       enBox.style.display = 'block';
 
+      // 判定後に添削コピーボタンを表示
+      document.getElementById('copyPromptBtn').style.display = 'inline-flex';
+      document.getElementById('copyPromptBtn').innerText = '📋 添削文をコピー';
       document.getElementById('playAnswerAudioBtn').style.display = 'inline-flex';
       document.getElementById('pronounceBtn').style.display = 'inline-flex';
 
@@ -500,6 +500,37 @@
         user: user || "(未入力)",
         correct: isMatch,
         date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    }
+
+    // --- 添削用プロンプトのクリップボードコピー ---
+    function copyFeedbackPrompt() {
+      if (!currentChallenge) return;
+      const jaText = document.getElementById('targetJaBox').innerText;
+      const modelEn = currentChallenge.text;
+      const userEn = document.getElementById('userInput').value.trim() || '(未入力)';
+
+      const promptText = `以下の英作文を添削してください。要点だけ簡潔に教えてください。
+
+【お題（日本語）】
+${jaText}
+
+【模範解答】
+${modelEn}
+
+【私の回答】
+${userEn}
+
+---
+1. 私の回答は自然な英語として通じますか？文法的な誤りやニュアンスの違和感があれば指摘してください。
+2. 模範解答との違いを簡潔に教えてください。`;
+
+      navigator.clipboard.writeText(promptText).then(() => {
+        const btn = document.getElementById('copyPromptBtn');
+        btn.innerText = '✅ コピー完了！';
+        setTimeout(() => { btn.innerText = '📋 添削文をコピー'; }, 2000);
+      }).catch(() => {
+        alert('クリップボードへのコピーに失敗しました');
       });
     }
 

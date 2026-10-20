@@ -211,4 +211,823 @@
 
   <script>
     // --- 組み込みのデフォルト教材（5つ） ---
-    const BUILTIN
+    const BUILTIN_PRESETS = [
+      {
+        group: "Rika's English Cafe",
+        title: "⭐ Rika's slow&easy 18（12月の誘惑とセール）",
+        url: "https://youtu.be/Pa_pTOAsUBk",
+        transcript: `0:08 Welcome to Rika's Slow and Easy English podcast. | リカの「スロー＆イージー英語ポッドキャスト」へようこそ。
+0:15 Thank you so much for tuning in today. | 今日も聴いてくださり本当にありがとうございます。
+0:20 It's December, and as you know, December means one thing: temptations. | もう12月ですね、そしてご存知の通り、12月といえばある一つのこと、つまり「誘惑」の季節です。
+0:32 Temptations to spend money on big sales. | 大規模なセールでお金を使ってしまう誘惑ですね。
+0:37 Everywhere I go, I see a Christmas vibe. | どこへ行ってもクリスマスムードが漂っています。
+0:42 Pretty lights, decorations, Christmas songs... | 綺麗なイルミネーションや飾り付け、そしてクリスマスソング。
+0:48 And on top of that, huge sales are going on in stores and online. | それに加えて、実店舗でもネット通販でも大セールが開催されています。
+0:57 The other day, I found myself frantically looking at the Amazon website, you know, trying to make the most of this season. | 先日、このセール時期を最大限に活用しようと、気づけば必死になってAmazonのサイトを眺めていました。
+1:08 I honestly didn't think I wanted anything, but once I started browsing, I suddenly became very busy clicking one thing after another. | 正直、欲しいものなんて何もないと思っていたのに、いざ見始めると、次から次へとクリックするのに大忙しになってしまいました。
+1:23 In the end, the things I bought were actually very simple. | 結局、買ったものは実はとてもシンプルなものばかりでした。
+1:28 Some everyday items like shampoo, soap, non-alcoholic beer, tea, and coffee. | シャンプーや石鹸、ノンアルコールビール、お茶、コーヒーといった日用品です。
+1:42 Nothing fancy. | 特別なものは何もありません。
+1:45 But I guess that's how they get you, right? | でも、そうやってまんまと罠にハマっちゃうんですよね。
+1:50 You go in thinking, "Oh, I don't need anything," and then suddenly your cart is full. | 「何も買う必要ないや」と思って見始めるのに、気づけばカートがいっぱいになっているんです。
+2:00 And I also bought a microphone. | それと、マイクも買いました。
+2:04 Yes, I decided it was time to update my podcast recording equipment. | ええ、ポッドキャストの収録機材をそろそろ新しくしようと決めたんです。
+2:12 I'm not totally sure if it's going to make a big difference, but I wanted to try it out anyway. | 大きな違いが出るかどうかは正直よく分かりませんが、とにかく試してみたかったんです。
+2:24 I thought, "Well, maybe it's a good investment." | 「まあ、良い自己投資になるかもしれないし」と思いまして。
+2:29 At least I hope it is. | 少なくともそうであってほしいですね。
+2:33 I know I should probably do some research before clicking the buy button. | 購入ボタンを押す前にもっとちゃんと調べた方がいいのは分かっているんです。
+2:41 Compare, read reviews, watch YouTube videos—all the smart things people do. | 比較したり、レビューを読んだり、YouTube動画を見たりと、みんながやるような賢い買い物の仕方をですね。
+2:52 But honestly, it's kind of a pain for me. | でも正直なところ、そういうのって私にとってはちょっと面倒なんです。
+2:57 So I just clicked it. | だから、そのままポチッとしちゃいました。
+3:00 Done. | 完了です。
+3:02 Well, December has just started, so I hope I can control myself for the rest of the month. | さて、12月は始まったばかりですし、今月の残りは自分をしっかりコントロールできるといいのですが。
+3:12 I don't want to open my credit card statement in January and regret everything. | 1月にクレジットカードの明細を開いて、全部後悔するなんてことにはなりたくありませんからね。
+3:20 How about you? | 皆さんはいかがですか？
+3:22 Are you planning to buy something during the holiday season, or are you trying to stay strong and save money? | ホリデーシーズンに何か買う予定はありますか、それとも誘惑に負けずに節約を頑張っていますか？
+3:30 Let me know. | ぜひ教えてくださいね。
+3:33 I'd love to hear about it. | 皆さんのお話を聞けるのを楽しみにしています。
+3:37 All right, that's it for today's episode. | それでは、今日のエピソードはここまでです。
+3:41 Thank you so much for listening. | 聴いてくださって本当にありがとうございました。
+3:45 Stay warm, stay healthy, and I'll talk to you again soon. | 暖かくして、健康にお過ごしくださいね。またすぐにお話ししましょう。
+3:51 Bye for now. | それでは、また。`
+      },
+      {
+        group: "Rika's English Cafe",
+        title: "⭐ Rika's slow&easy 17（秋のドライブと季節の移ろい）",
+        url: "https://youtu.be/hUfdvlxipGg",
+        transcript: `0:08 Welcome to Rika's Slow and Easy English podcast. | リカの「スロー＆イージー英語ポッドキャスト」へようこそ。
+0:13 Hi everyone, I hope you're all enjoying this beautiful season. | 皆さんこんにちは、この素晴らしい季節を楽しんでいますか？
+0:19 The air has become so crisp, and I just love the feeling of being wrapped in my warm blanket in the morning when it's a little chilly. | 空気がとても澄んで心地よくなってきましたし、少し肌寒い朝に温かい毛布にくるまっている感覚が大好きです。
+0:33 Yes, it does make it harder to get out of bed, but it feels so nice to open the curtain and see the bright, clear autumn sky. | 確かにベッドから出るのは大変になりますが、カーテンを開けて澄み渡った秋の青空を見るのは本当に気持ちがいいものです。
+0:48 The clouds look different from summer, don't they? | 雲の形も夏とは違って見えますよね？
+0:54 And I can see the mountains slowly turning colorful. | そして山々が少しずつ色づいていくのが見えます。
+1:00 I also love seeing the fruits and vegetables of the season, especially pears. | 旬の果物や野菜を見るのも好きで、特に梨が大好物です。
+1:10 They're my favorite autumn fruit. | 梨は私の一番好きな秋の味覚です。
+1:14 Last week, after taking my father to the doctor, the weather was just too beautiful to go straight home, so we decided to take a drive toward Kumamoto. | 先週、父を病院へ連れて行った後、まっすぐ帰るにはもったいないほどの素晴らしい天気だったので、熊本方面へドライブすることにしました。
+1:33 My father used to be a bulldozer driver, and he worked on building many of the roads around that area. | 父はかつてブルドーザーの運転手をしていて、あの周辺の多くの道路建設に携わっていました。
+1:45 He looked very nostalgic and happy remembering those days. | 当時のことを懐かしそうに思い出しながら、とても嬉しそうにしていました。
+1:53 We stopped by a beautiful spot on the border between Miyazaki and Kumamoto prefectures. | 私たちは宮崎県と熊本県の県境にある素敵な場所に立ち寄りました。
+2:03 The view was stunning, the trees were starting to change colors, and the air felt so fresh. | 景色は見事で、木々は色づき始めており、空気もとても澄んでいました。
+2:13 On our way home, we treated ourselves to some chestnut-flavored soft serve ice cream. | 帰り道には、自分たちへのご褒美に栗味のソフトクリームを食べました。
+2:21 We also picked up some flowers for my mom's altar. | それから、母の仏壇にお供えするお花も買って帰りました。
+2:28 It was such a nice little trip to the mountains—peaceful, heartwarming, and full of autumn colors. | 穏やかで心温まる、秋の彩りに満ちた本当に素敵なプチ山旅行になりました。
+2:39 It's such a shame that this beautiful season won't last long. | この美しい季節が長く続かないのは本当に名残惜しいですね。
+2:45 Autumn always feels short, doesn't it? | 秋っていつもあっという間に過ぎてしまいますよね？
+2:50 Before we know it, winter will be here. | 気づけばもう冬がやって来ます。
+2:55 Winter in Miyazaki is pretty mild. | 宮崎の冬はかなり温暖です。
+2:58 We almost never get snow, but still it gets quite cold, especially in the mornings and evenings. | 雪はめったに降りませんが、それでも朝晩を中心に結構冷え込みます。
+3:09 And can you believe it, we only have a little over one month left this year. | そして信じられますか、今年ももう残り1ヶ月ちょっとしかありません。
+3:19 Time really flies. | 本当に光陰矢の如しですね。
+3:22 It feels like we just welcomed the new year, and now we are getting close to the next one. | 新年を迎えたばかりのように感じるのに、もう次の年が近づいています。
+3:33 When I go to stores, I hear Christmas songs playing. | お店に行くと、クリスマスソングが流れているのを耳にします。
+3:38 I see New Year's food advertisements everywhere. | あちこちでお正月料理の広告も見かけます。
+3:44 They already have osechi dishes and special holiday items on display. | すでにおせち料理や年末年始の特設コーナーが並んでいます。
+3:54 To be honest, I'm not ready for that at all. | 正直なところ、私はまだそんな気分にはまったく追いつけていません。
+3:58 I don't want to think about the end of the year yet. | まだ年末のことなんて考えたくないのです。
+4:03 I just want to enjoy this beautiful season as much as I can. | ただこの美しい季節をできる限り満喫したいだけなんです。
+4:10 I want to take my time, breathe in the crisp air, look at the autumn leaves, and not feel rushed into the next year. | のんびり過ごして、澄んだ空気を吸い込んで、紅葉を眺めながら、次の年に急かされることなく過ごしたいです。
+4:23 Autumn is quiet, calm, and peaceful. | 秋は静かで穏やかで、心が落ち着きます。
+4:28 Maybe that's why I love it so much. | だからこそ、私は秋がこんなにも大好きなのかもしれません。
+4:33 It feels like the season tells us, "Slow down, take a moment, and enjoy what's around you." | まるでこの季節が「少しスピードを落として、立ち止まって、身の回りのものを楽しんで」と教えてくれているような気がします。
+4:48 Thank you for listening, and I will talk to you next time. | 聴いてくださりありがとうございました。また次回お話ししましょう。`
+      },
+      {
+        group: "Rika's English Cafe",
+        title: "⭐ Rika's slow&easy 16（卵30個とうっかり買い出し）",
+        url: "https://youtu.be/ZShGItI8Xrk",
+        transcript: `0:08 Welcome to Rika's Slow and Easy English podcast. | リカの「スロー＆イージー英語ポッドキャスト」へようこそ。
+0:13 Hi everyone, I hope you're doing well today. | 皆さんこんにちは、今日もお元気でお過ごしでしょうか。
+0:20 Lately, I have been a little forgetful, or maybe absent-minded. | 最近、少し物忘れが多かったり、ぼーっとしてしまったりすることがあるんです。
+0:28 Let me tell you what happened the other day. | 先日あった出来事をお話しさせてくださいね。
+0:32 I went shopping at the supermarket. | スーパーへ買い物に行きました。
+0:37 When I came home, I opened my fridge, and then I realized something. | 家に帰って冷蔵庫を開けた時、あることに気づいたんです。
+0:46 I already had 20 eggs in there, and I had just bought another 10 eggs. | 冷蔵庫にはすでに卵が20個もあったのに、さらに10個買ってしまっていたんですよ。
+0:58 That means I now had 30 eggs in total. | つまり、合計で30個の卵があることになります。
+1:04 I was so mad at myself. | もう、自分のうっかり加減に嫌気がさしちゃいました。
+1:08 Thirty eggs, what can I do with so many? | 30個もの卵なんて、一体どうしたらいいんでしょう。
+1:15 So far, I boiled some eggs, and last night I cooked oyakodon, that chicken and egg over rice, but still I have about 25 eggs left. | これまでにゆで卵を作ったり、昨日の夜は親子丼（鶏肉と卵のご飯ですね）を作ったりしましたが、それでもまだ25個くらい残っています。
+1:33 I like eggs, but this is too many. | 卵は好きですけど、さすがにこれは多すぎますよね。
+1:39 Of course, I know the answer: I should make a shopping list before I go shopping, but honestly it's a hassle, you know. | もちろん解決策は分かっているんですよ、買い物に行く前に買い物リストを作ればいいってことくらい。でも正直、面倒なんですよね。
+1:53 And speaking of shopping, there's one more thing I don't like. | それと買い物といえば、もう一つ苦手なことがあるんです。
+2:01 I don't like waiting in line at the checkout counter. | レジの列に並んで待つのが苦手なんです。
+2:06 Why is it that every time I wait in line, the other lines go faster? | なんで自分が並んだ列って、いつも他の列より進みが遅いんでしょうね？
+2:16 It's so frustrating, you know. | 本当にモヤモヤしちゃいます。
+2:20 Lately, more and more shops have self-checkout. | 最近はセルフレジを導入するお店がますます増えてきましたよね。
+2:26 It's usually faster than the regular checkout, but if you hit the wrong button or the scanner doesn't work, it becomes another hassle. | 普通のレジより早いことが多いですが、ボタンを押し間違えたりバーコードリーダーがうまく反応しなかったりすると、それはそれでまた面倒なことになります。
+2:40 I wish things were easier. | もっと色々とスムーズになったらいいのにと思います。
+2:44 Actually, I really wish all the stores would introduce the Uniqlo checkout system. | 実は、すべてのお店がユニクロのレジシステムを導入してくれればいいのにと本気で思っているんです。
+2:54 Do you know it? | ご存知ですか？
+2:56 You just put your whole basket in, and the machine gives you the total price instantly. | カゴごと置くだけで、機械が一瞬で合計金額を出してくれるんですよ。
+3:06 You don't have to scan anything. | バーコードを一つひとつ読み取る必要もありません。
+3:10 It's so simple, so seamless. | 本当にシンプルで、すごくスムーズなんです。
+3:14 I usually go shopping only a few times a week, but I also need to buy groceries for my dad, so sometimes I go to different stores to get everything I need. | 普段は週に数回しか買い物に行かないのですが、父のための食料品も買う必要があるので、必要なものを揃えるために何軒かハシゴすることもあります。
+3:31 And maybe that is why I sometimes forget what I already have at home. | もしかしたら、そのせいで家に何があるか分からなくなっちゃうのかもしれませんね。
+3:40 Or maybe it's just because of the heat. | あるいは、単にこの暑さのせいかもしれません。
+3:45 Yes, let's blame the heat! | そう、暑さのせいにしちゃいましょう！
+3:49 Lately, it's been so, so hot. | ここ最近は本当に、ものすごく暑い日が続いています。
+3:54 When I get into my car, I cannot even touch the steering wheel because it feels burning hot. | 車に乗ると、ハンドルが焼けつくように熱くて握ることすらできないほどです。
+4:03 And today is another very hot day. | そして今日もまた、とっても暑い一日です。
+4:07 Honestly, I don't want to go out in this heat, but I have no choice. | 正直なところ、この猛暑の中を出かけたくはないのですが、仕方ありません。
+4:15 I must go out shopping again. | また買い物に行かなければならないんです。
+4:19 So that's my little story for today. | というわけで、これが今日の私のちょっとした小話でした。
+4:23 If you have a good recipe for eggs, please let me know. | もし卵を使ったおすすめのレシピがあれば、ぜひ教えてくださいね。
+4:28 I really need it. | 切実に困っているので！
+4:30 Thank you for listening, and I'll talk to you again soon. | 聴いてくださってありがとうございました、またすぐにお話ししましょう。`
+      },
+      {
+        group: "Rika's English Cafe",
+        title: "⭐ Rika's slow&easy 15（平日のモーニングルーティン）",
+        url: "https://youtu.be/Dy2ALKfKmIA",
+        transcript: `0:08 Hi everyone, welcome to Rika's Slow and Easy English podcast. | 皆さんこんにちは、リカの「スロー＆イージー英語ポッドキャスト」へようこそ。
+0:17 It's Monday, and a new week has begun. | 月曜日ですね、また新しい一週間が始まりました。
+0:22 Today, I'd like to talk about my morning routine on weekdays. | 今日は、私の平日のモーニングルーティンについてお話ししたいと思います。
+0:29 I usually get up around 7:00, but lately I wake up a little earlier. | 普段は7時頃に起きるのですが、最近はもう少し早く目が覚めます。
+0:38 Maybe it's because the sunshine comes into my room. | 朝の光が部屋に差し込んでくるからかもしれませんね。
+0:43 I'm not an early bird, but I'm not a night owl either. | 私は朝型人間ではありませんが、夜型人間というわけでもありません。
+0:51 I think I'm somewhere in between. | ちょうどその中間くらいだと思います。
+0:56 The first thing I do is head to the bathroom. | 起きてまず最初にすることは、洗面所に向かうことです。
+1:01 I take a shower to wake myself up. | 目を覚ますためにシャワーを浴びます。
+1:07 After the shower, I have to dry my hair, and to be honest, I really hate drying my hair. | シャワーの後は髪を乾かさなければいけないのですが、正直なところ、髪を乾かす時間が本当に嫌いなんです。
+1:19 If I could hire someone just to dry my hair, I would. | 髪を乾かしてくれるだけの人を雇えるなら、雇いたいくらいです。
+1:24 It feels like such a waste of time. | なんだか時間がすごくもったいなく感じてしまうんですよね。
+1:27 So I listen to a podcast or an audio book while I do it. | なので、髪を乾かしながらポッドキャストやオーディオブックを聴いています。
+1:33 That way, I make good use of my time. | そうやって時間を有効活用しているんです。
+1:37 Next, I make a simple breakfast, usually just one piece of toast and a cup of tea. | 次に簡単な朝食を用意しますが、たいていはトースト1枚とお茶1杯だけです。
+1:50 I sometimes have coffee, maybe once a week, but basically I'm a tea person. | たまに、週に1回くらいはコーヒーを飲むこともありますが、基本的には紅茶派です。
+2:02 While I eat breakfast, I watch the morning news. | 朝食を食べながら、朝のニュースを見ます。
+2:08 After breakfast, I put my face on. | 朝食後はメイクをします。
+2:14 That means I put on my makeup. | つまり、お化粧をするということです。
+2:18 It's not fun, but it's part of my daily routine. | 楽しい作業ではありませんが、毎日の日課の一部ですね。
+2:23 Then I tidy up my room a little. | それから、部屋を少し片付けます。
+2:27 I water the plants and feed the fish. | 植物に水をやって、魚にエサをあげます。
+2:33 I also do the laundry and wash the dishes. | 洗濯をして、食器洗いもします。
+2:41 Laundry and dishes, the neverending story of adult life. | 洗濯と皿洗いは、大人の暮らしの終わりのない日常茶飯事ですよね。
+2:47 I don't like leaving dirty dishes in the sink, so I wash them right after meals. | 汚れたお皿をシンクに溜めておくのが嫌なので、食後すぐに洗うようにしています。
+2:57 You know what they say, a stitch in time saves nine. | 「早めの手当てが大事（後々大変になるのを防ぐ）」って言いますよね。
+3:04 After that, I go into my classroom. | その後、レッスン用の部屋に入ります。
+3:09 I check my emails and get ready for my morning lessons. | メールをチェックして、午前中のレッスンの準備をします。
+3:18 I usually start teaching at 10:00. | 普段は10時からレッスンを始めます。
+3:22 Most of my lessons are online, so I don't have to go out. | レッスンのほとんどはオンラインなので外出する必要はありません。
+3:29 But once a week, I teach a big face-to-face class. | でも週に1回だけ、大人数の対面レッスンを担当しています。
+3:35 On that day, I drive to the venue. | その日は車で会場まで向かいます。
+3:41 I don't mind it at all. | 運転は全然苦になりません。
+3:43 In fact, I love driving. | というか、むしろドライブが大好きなんです。
+3:48 When I drive, I listen to my favorite music. | 運転中は、お気に入りの音楽を聴いています。
+3:54 It really puts me in a good mood. | 本当に気分が上がりますね。
+3:59 Lately, I've been listening to a band called Leisure. | 最近は「Leisure」というバンドの曲を聴いています。
+4:06 Their music is so groovy. | 彼らの音楽はすごくグルーヴィーなんです。
+4:12 It makes the drive even more enjoyable. | そのおかげで、ドライブが一段と楽しくなります。
+4:18 So that is my weekday morning routine. | 以上が、私の平日のモーニングルーティンです。
+4:22 What about you? | 皆さんはいかがですか？
+4:24 What do you usually do in the morning? | 朝は普段どんなことをして過ごしていますか？
+4:28 Thank you for listening, and I'll talk to you soon. | 聴いてくださってありがとうございました、またすぐにお話ししましょう。`
+      },
+      {
+        group: "Rika's English Cafe",
+        title: "⭐ Rika's slow&easy 14（お盆の過ごし方と風習）",
+        url: "https://youtu.be/s2HivZXY-TI",
+        transcript: `0:08 Welcome to Rika's Slow and Easy English podcast. | リカの「スロー＆イージー英語ポッドキャスト」へようこそ。
+0:15 We are right in the middle of Obon now. | ちょうど今、お盆の真っ只中ですね。
+0:20 Obon is a special time in Japan when we honor the spirits of our ancestors. | お盆はご先祖様の霊をお迎えして供養する、日本にとって特別な時期です。
+0:28 Many people take time off work, travel back to their hometowns, and visit their family graves. | 多くの人が仕事を休んで実家に帰省し、お墓参りをします。
+0:40 They clean the graves, offer flowers, and sometimes light incense. | お墓を掃除して、お花をお供えし、お線香をあげたりします。
+0:49 In many places, there are also Bon Odori dances and summer festivals. | 多くの地域では、盆踊りや夏祭りも開催されます。
+0:57 This is also the time when a lot of people in Japan have a longer vacation, so they travel to different places. | また、この時期は多くの人がまとまった連休を取れるため、色々な場所へ旅行に出かけたりもします。
+1:11 Many tourist spots, train stations, and airports are packed. | 多くの観光地や駅、空港はどこも大混雑です。
+1:21 If you are traveling during Obon, you have to be ready for big crowds and heavy traffic. | お盆休みに旅行するなら、人混みや大渋滞を覚悟しなければなりませんね。
+1:29 Yesterday morning, I visited the cemetery very early, and I got a lot of mosquito bites. | 昨日の朝、とても早い時間にお墓参りに行ったのですが、蚊にたくさん刺されてしまいました。
+1:39 At one point, I looked over and saw my dad with two mosquitoes sitting on his cheek. | ふと父の顔を見ると、頬に蚊が2匹もとまっていたんです。
+1:49 So I slapped him. | だから、ピシャリと叩いてしまいました。
+1:53 He looked so frightened, but I saved him from two bites. | 父はすごく驚いた様子でしたが、2箇所も刺されずに済んだので助けてあげられたわけです。
+2:02 Obon is much more simplified nowadays. | 最近では、お盆の過ごし方もかなり簡略化されてきています。
+2:08 Traditionally, people will cook special vegetable dishes because in Buddhism meat and fish are not welcomed, and offer them to the Buddhist altar. | 仏教では肉や魚が避けられるため、伝統的には特別な精進料理を作ってお仏壇にお供えします。
+2:26 But preparing these dishes takes time and effort. | でも、そういった料理を用意するのは手間も時間もかかりますよね。
+2:33 So some people don't do it anymore. | そのため、最近ではもう作らないという人もいます。
+2:37 Today at the store, I saw something surprising: instant offering dishes. | 今日お店でびっくりするものを見かけました、なんと「インスタントのお供え料理」です。
+2:47 You just pour water into the package to make them edible. | パッケージにお水を注ぐだけで食べられるようになるんですよ。
+2:53 It's definitely convenient, but I wonder if they actually taste good. | 確かに便利ではありますが、果たして本当に美味しいのかなと思ってしまいます。
+3:02 Some places in Japan also have an interesting ritual. | 日本の地域によっては、興味深い風習もあります。
+3:07 They make a horse out of a cucumber so the spirits can ride it back home quickly. | ご先祖様の霊が少しでも早く家に帰って来られるように、きゅうりで馬を作るんです。
+3:17 And they make a cow out of an eggplant so the spirits can return slowly and take their time. | そして、帰りはのんびり時間をかけて戻れるように、なすで牛を作ります。
+3:27 I think it is fascinating. | とても素敵な風習だなと思います。
+3:30 But we don't do that here in Miyazaki. | でも、ここ宮崎ではそういうことはしないんですよね。
+3:35 This year's Obon will be a quiet one for me, just me and my dad at home. | 今年の私のお盆は、家で父と2人きりの静かなものになりそうです。
+3:42 I'm going to prepare some little dishes for my mom and my ancestors. | 母やご先祖様のために、ちょっとしたお料理を作ろうと思っています。
+3:50 And this evening, we will burn pine branches. | そして今晩、松の木（迎え火・送り火）を焚く予定です。
+3:56 This is a tradition to guide them back to the other world. | これは、ご先祖様をあの世へと無事に見送るための伝統なんです。
+4:03 Even without big gatherings or festivals, Obon is still meaningful for me. | 親戚の大集まりやお祭りがなくても、お盆は私にとってとても意味のある大切な時間です。
+4:13 It's a time to remember, to feel close to family, and to be grateful. | 故人を偲び、家族との絆を実感し、感謝の気持ちを持つための時間ですね。
+4:22 If you are also observing Obon, I hope it's a peaceful and meaningful time for you. | 皆さんもお盆を過ごされているなら、どうか穏やかで意義深いひとときとなりますように。
+4:30 Thanks for spending a little time with me today. | 今日も少しの間お付き合いいただき、ありがとうございました。
+4:36 I will talk to you again soon. | またすぐにお話ししましょう。
+4:40 Bye for now. | それでは、また。`
+      }
+    ];
+
+    let ytPlayer = null;
+    let sentences = [];
+    let currentIdx = -1;
+    let currentChallenge = null;
+    let timeTrackingTimer = null;
+    let contextPauseTimer = null;
+    let isSubtitlesHidden = false;
+    let showJapaneseSubtitle = true;
+    let currentSelectedGroup = "ALL";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderPresets();
+      renderHistory();
+    });
+
+    // --- プリセット管理 ---
+    function getCustomPresets() {
+      const stored = JSON.parse(localStorage.getItem('yt_presets') || '[]');
+      return stored.map(p => ({
+        ...p,
+        group: p.group || "その他"
+      }));
+    }
+
+    function getAllPresets() {
+      const custom = getCustomPresets();
+      return [...BUILTIN_PRESETS, ...custom];
+    }
+
+    function renderPresets() {
+      const all = getAllPresets();
+      
+      // グループ一覧の取得
+      const groups = ["ALL"];
+      all.forEach(p => {
+        const g = p.group || "その他";
+        if (!groups.includes(g)) groups.push(g);
+      });
+
+      // 存在しないグループが選ばれていた場合はALLに戻す
+      if (!groups.includes(currentSelectedGroup)) {
+        currentSelectedGroup = "ALL";
+      }
+
+      // タブボタンの描画
+      const tabsContainer = document.getElementById('groupTabsContainer');
+      tabsContainer.innerHTML = '';
+      groups.forEach(g => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `group-tab-btn ${g === currentSelectedGroup ? 'active' : ''}`;
+        btn.innerText = g === "ALL" ? "すべて" : g;
+        btn.onclick = () => {
+          currentSelectedGroup = g;
+          renderPresets();
+        };
+        tabsContainer.appendChild(btn);
+      });
+
+      // セレクトボックスの描画（現在のグループで絞り込み）
+      const select = document.getElementById('presetSelect');
+      select.innerHTML = '<option value="">-- 教材を選択してください --</option>';
+
+      all.forEach((p, idx) => {
+        const itemGroup = p.group || "その他";
+        if (currentSelectedGroup === "ALL" || currentSelectedGroup === itemGroup) {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          const groupBadge = currentSelectedGroup === "ALL" ? `[${itemGroup}] ` : "";
+          opt.innerText = `${groupBadge}${p.title}`;
+          select.appendChild(opt);
+        }
+      });
+
+      document.getElementById('deletePresetBtn').style.display = 'none';
+    }
+
+    function saveCurrentAsPreset() {
+      const url = document.getElementById('ytUrl').value.trim();
+      const transcript = document.getElementById('transcriptInput').value.trim();
+
+      if (!url) return alert('YouTubeのURLが入力されていません。');
+      if (!transcript) return alert('文字起こしテキストがありません。');
+
+      const defaultGroup = currentSelectedGroup !== "ALL" ? currentSelectedGroup : "Rika's English Cafe";
+      const group = prompt('チャンネル名（グループ名）を入力してください:', defaultGroup);
+      if (!group) return;
+
+      const title = prompt('教材のタイトルを入力してください:');
+      if (!title) return;
+
+      const custom = getCustomPresets();
+      custom.unshift({ group: group.trim(), title: title.trim(), url, transcript });
+      localStorage.setItem('yt_presets', JSON.stringify(custom));
+      
+      currentSelectedGroup = group.trim();
+      renderPresets();
+      alert(`「[${group.trim()}] ${title.trim()}」を教材ライブラリに保存しました！`);
+    }
+
+    function loadSelectedPreset() {
+      const select = document.getElementById('presetSelect');
+      const idx = select.value;
+      const deleteBtn = document.getElementById('deletePresetBtn');
+
+      if (idx === "") {
+        deleteBtn.style.display = 'none';
+        return;
+      }
+
+      // デフォルト教材は削除不可、ユーザー追加分のみ削除ボタン表示
+      if (Number(idx) < BUILTIN_PRESETS.length) {
+        deleteBtn.style.display = 'none';
+      } else {
+        deleteBtn.style.display = 'inline-flex';
+      }
+
+      const all = getAllPresets();
+      const p = all[idx];
+      if (!p) return;
+
+      document.getElementById('ytUrl').value = p.url;
+      document.getElementById('transcriptInput').value = p.transcript;
+
+      loadYouTubeVideo();
+      parseRawTranscript();
+    }
+
+    function deleteSelectedPreset() {
+      const select = document.getElementById('presetSelect');
+      const idx = select.value;
+      if (idx === "") return alert('削除する教材を選択してください。');
+
+      const numIdx = Number(idx);
+      if (numIdx < BUILTIN_PRESETS.length) {
+        return alert('デフォルトの教材は削除できません。');
+      }
+
+      const customIdx = numIdx - BUILTIN_PRESETS.length;
+      const custom = getCustomPresets();
+      const target = custom[customIdx];
+      if (!confirm(`「[${target.group}] ${target.title}」を削除しますか？`)) return;
+
+      custom.splice(customIdx, 1);
+      localStorage.setItem('yt_presets', JSON.stringify(custom));
+      renderPresets();
+      document.getElementById('deletePresetBtn').style.display = 'none';
+    }
+
+    // --- 字幕・UI表示 ---
+    function toggleSubtitleVisibility() {
+      isSubtitlesHidden = !isSubtitlesHidden;
+      const list = document.getElementById('subtitleList');
+      const btn = document.getElementById('toggleSubVisibilityBtn');
+      if (isSubtitlesHidden) {
+        list.classList.add('hidden-mode');
+        btn.innerText = '👁️ 表示';
+      } else {
+        list.classList.remove('hidden-mode');
+        btn.innerText = '👁️ 隠す';
+      }
+    }
+
+    function toggleJaSubtitle() {
+      showJapaneseSubtitle = !showJapaneseSubtitle;
+      const list = document.getElementById('subtitleList');
+      const btn = document.getElementById('toggleJaBtn');
+      if (showJapaneseSubtitle) {
+        list.classList.remove('hide-ja');
+        btn.innerText = '🇯🇵 和訳: ON';
+      } else {
+        list.classList.add('hide-ja');
+        btn.innerText = '🇯🇵 和訳: OFF';
+      }
+    }
+
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('player', {
+        height: '100%',
+        width: '100%',
+        videoId: 'Pa_pTOAsUBk',
+        playerVars: {
+          'playsinline': 1,
+          'origin': window.location.origin
+        },
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
+    function extractVideoId(url) {
+      if (!url) return null;
+      const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/;
+      const match = url.match(regExp);
+      return (match && match[1]) ? match[1] : null;
+    }
+
+    function loadYouTubeVideo() {
+      const url = document.getElementById('ytUrl').value.trim();
+      const videoId = extractVideoId(url);
+      if (!videoId) return alert('動画IDが見つかりませんでした。URLを確認してください。');
+      
+      if (ytPlayer && ytPlayer.loadVideoById) {
+        ytPlayer.loadVideoById(videoId);
+      }
+    }
+
+    function skipVideo(sec) {
+      if (!ytPlayer || !ytPlayer.getCurrentTime) return;
+      ytPlayer.seekTo(Math.max(0, ytPlayer.getCurrentTime() + sec), true);
+    }
+
+    const speeds = [1.0, 0.8, 0.6, 1.2];
+    let speedIdx = 0;
+    function toggleSpeed() {
+      if (!ytPlayer || !ytPlayer.setPlaybackRate) return;
+      speedIdx = (speedIdx + 1) % speeds.length;
+      const rate = speeds[speedIdx];
+      ytPlayer.setPlaybackRate(rate);
+      document.getElementById('speedBtn').innerText = `速度: ${rate.toFixed(1)}x`;
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        if (!timeTrackingTimer) {
+          timeTrackingTimer = setInterval(trackSubtitles, 250);
+        }
+      } else {
+        clearInterval(timeTrackingTimer);
+        timeTrackingTimer = null;
+      }
+    }
+
+    function trackSubtitles() {
+      if (!ytPlayer || !ytPlayer.getCurrentTime || sentences.length === 0) return;
+      const current = ytPlayer.getCurrentTime();
+
+      for (let i = 0; i < sentences.length; i++) {
+        const item = sentences[i];
+        if (current >= item.start && current < item.end) {
+          const el = document.getElementById(`sub-${i}`);
+          if (el && !el.classList.contains('active')) {
+            document.querySelectorAll('.sub-item.active').forEach(it => it.classList.remove('active'));
+            el.classList.add('active');
+            if (!isSubtitlesHidden) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    // --- パーサー ---
+    function parseRawTranscript() {
+      const raw = document.getElementById('transcriptInput').value.trim();
+      if (!raw) return;
+
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      sentences = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const timeMatch = line.match(/^(\d{1,2}:)?\d{1,2}:\d{2}/);
+
+        if (timeMatch) {
+          const sec = timeToSeconds(timeMatch[0]);
+          let rest = line.replace(timeMatch[0], '').trim();
+          
+          let en = rest;
+          let ja = '';
+
+          if (rest.includes('|')) {
+            const parts = rest.split('|');
+            en = parts[0].trim();
+            ja = parts.slice(1).join('|').trim();
+          }
+
+          if (en) {
+            sentences.push({
+              start: sec,
+              text: en,
+              translation: ja
+            });
+          }
+        }
+      }
+
+      if (sentences.length === 0) return alert('タイムスタンプが見つかりませんでした。');
+
+      for (let i = 0; i < sentences.length; i++) {
+        sentences[i].end = (i < sentences.length - 1) ? sentences[i+1].start : sentences[i].start + 4;
+      }
+
+      renderSubtitles();
+      document.getElementById('transcriptDetails').removeAttribute('open');
+    }
+
+    function timeToSeconds(t) {
+      const parts = t.split(':').map(Number);
+      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      if (parts.length === 2) return parts[0] * 60 + parts[1];
+      return 0;
+    }
+
+    function renderSubtitles() {
+      const list = document.getElementById('subtitleList');
+      document.getElementById('subCount').innerText = `${sentences.length} 文`;
+      list.innerHTML = '';
+
+      sentences.forEach((s, idx) => {
+        const div = document.createElement('div');
+        div.className = 'sub-item';
+        div.id = `sub-${idx}`;
+        div.innerHTML = `
+          <div class="sub-en"><span class="sub-time">${formatTime(s.start)}</span>${s.text}</div>
+          ${s.translation ? `<div class="sub-ja">${s.translation}</div>` : ''}
+        `;
+        div.onclick = () => {
+          clearInterval(contextPauseTimer);
+          if (ytPlayer && ytPlayer.seekTo) {
+            ytPlayer.seekTo(s.start, true);
+            ytPlayer.playVideo();
+          }
+        };
+        list.appendChild(div);
+      });
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    // --- 文脈英作文 出題 ---
+    function pickRandomSentence() {
+      if (sentences.length === 0) return alert('先に教材を選択するか、文字起こしを反映してください。');
+      
+      currentIdx = sentences.length > 1 ? Math.floor(Math.random() * (sentences.length - 1)) + 1 : 0;
+      currentChallenge = sentences[currentIdx];
+
+      document.getElementById('userInput').value = '';
+      document.getElementById('resultBox').innerHTML = '';
+      document.getElementById('wordsContainer').innerHTML = '';
+      document.getElementById('targetEnBox').style.display = 'none';
+      document.getElementById('playAnswerAudioBtn').style.display = 'none';
+      document.getElementById('pronounceBtn').style.display = 'none';
+      document.getElementById('copyPromptBtn').style.display = 'none';
+      document.getElementById('replayContextBtn').style.display = 'inline-flex';
+
+      if (currentChallenge.translation) {
+        document.getElementById('targetJaBox').innerText = currentChallenge.translation;
+      } else {
+        document.getElementById('targetJaBox').innerText = 'お題を翻訳中...';
+        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=${encodeURIComponent(currentChallenge.text)}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data && data[0]) {
+              const fullTranslation = data[0].map(item => item[0]).filter(Boolean).join('');
+              document.getElementById('targetJaBox').innerText = fullTranslation || '（翻訳なし）';
+            }
+          })
+          .catch(() => {
+            document.getElementById('targetJaBox').innerText = '（お題の翻訳取得に失敗しました）';
+          });
+      }
+
+      playContextLeadIn();
+    }
+
+    function playContextLeadIn() {
+      if (!currentChallenge || !ytPlayer || !ytPlayer.seekTo) return;
+      clearInterval(contextPauseTimer);
+
+      let leadStart = Math.max(0, currentChallenge.start - 6);
+      if (currentIdx > 0) {
+        leadStart = sentences[currentIdx - 1].start;
+      }
+
+      document.getElementById('challengeStatus').innerText = '🎧 前後の会話を再生中...';
+      ytPlayer.seekTo(leadStart, true);
+      ytPlayer.playVideo();
+
+      const targetStart = currentChallenge.start;
+      contextPauseTimer = setInterval(() => {
+        if (ytPlayer.getCurrentTime && ytPlayer.getCurrentTime() >= targetStart) {
+          ytPlayer.pauseVideo();
+          clearInterval(contextPauseTimer);
+          document.getElementById('challengeStatus').innerText = '🛑 一時停止中：日本語を英語で表現してください！';
+        }
+      }, 50);
+    }
+
+    function playAnswerAudio() {
+      if (!currentChallenge || !ytPlayer || !ytPlayer.seekTo) return;
+      clearInterval(contextPauseTimer);
+      ytPlayer.seekTo(currentChallenge.start, true);
+      ytPlayer.playVideo();
+    }
+
+    function clean(str) {
+      return str.toLowerCase().replace(/[.,?!'"]/g, '').trim();
+    }
+
+    function checkAnswer() {
+      if (!currentChallenge) return alert('先に出題ボタンを押してください。');
+      const user = document.getElementById('userInput').value.trim();
+      const isMatch = clean(user) === clean(currentChallenge.text);
+
+      const enBox = document.getElementById('targetEnBox');
+      enBox.innerText = `正解: ${currentChallenge.text}`;
+      enBox.style.display = 'block';
+
+      document.getElementById('copyPromptBtn').style.display = 'inline-flex';
+      document.getElementById('copyPromptBtn').innerText = '📋 添削文をコピー';
+      document.getElementById('playAnswerAudioBtn').style.display = 'inline-flex';
+      document.getElementById('pronounceBtn').style.display = 'inline-flex';
+
+      const resBox = document.getElementById('resultBox');
+      if (isMatch) {
+        resBox.innerHTML = '<span style="color:var(--success); font-weight:700;">🎉 パーフェクト！一致しています！</span>';
+      } else {
+        resBox.innerHTML = `
+          <div style="color:var(--danger); font-weight:600;">差分・別表現の確認</div>
+          <div style="font-size:0.85rem; color:#475569; margin-top:2px;">あなたの回答: <strong>${user || '(未入力)'}</strong></div>
+        `;
+      }
+
+      saveHistoryItem({
+        target: currentChallenge.text,
+        user: user || "(未入力)",
+        correct: isMatch,
+        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    }
+
+    function copyFeedbackPrompt() {
+      if (!currentChallenge) return;
+      const jaText = document.getElementById('targetJaBox').innerText;
+      const modelEn = currentChallenge.text;
+      const userEn = document.getElementById('userInput').value.trim() || '(未入力)';
+
+      const promptText = `以下の英作文を添削してください。要点だけ簡潔に教えてください。
+
+【お題（日本語）】
+${jaText}
+
+【模範解答】
+${modelEn}
+
+【私の回答】
+${userEn}
+
+---
+1. 私の回答は自然な英語として通じますか？文法的な誤りやニュアンスの違和感があれば指摘してください。
+2. 模範解答との違いを簡潔に教えてください。`;
+
+      navigator.clipboard.writeText(promptText).then(() => {
+        const btn = document.getElementById('copyPromptBtn');
+        btn.innerText = '✅ コピー完了！';
+        setTimeout(() => { btn.innerText = '📋 添削文をコピー'; }, 2000);
+      }).catch(() => {
+        alert('クリップボードへのコピーに失敗しました');
+      });
+    }
+
+    function saveHistoryItem(item) {
+      const history = JSON.parse(localStorage.getItem('yt_dictation_history') || '[]');
+      history.unshift(item);
+      if (history.length > 30) history.pop();
+      localStorage.setItem('yt_dictation_history', JSON.stringify(history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem('yt_dictation_history') || '[]');
+      const container = document.getElementById('historyList');
+      if (history.length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8; padding:8px;">まだ履歴がありません。</div>';
+        return;
+      }
+      container.innerHTML = history.map(h => `
+        <div class="history-item">
+          <div>
+            <span class="history-tag ${h.correct ? 'tag-correct' : 'tag-wrong'}">${h.correct ? '一致' : '要復習'}</span>
+            <strong>${h.target}</strong>
+            <div style="color:#64748b; font-size:0.8rem; margin-top:2px;">回答: ${h.user}</div>
+          </div>
+          <span style="color:#94a3b8; font-size:0.75rem;">${h.date}</span>
+        </div>
+      `).join('');
+    }
+
+    function clearHistory() {
+      if (confirm('学習履歴をクリアしますか？')) {
+        localStorage.removeItem('yt_dictation_history');
+        renderHistory();
+      }
+    }
+
+    // --- 音声入力 ---
+    let recognition = null;
+    let isRecording = false;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SR();
+      recognition.lang = 'en-US';
+      recognition.onstart = () => { isRecording = true; document.getElementById('sttBtn').innerText = '⏹️ 録音中...'; };
+      recognition.onresult = (e) => {
+        document.getElementById('userInput').value = e.results[0][0].transcript;
+      };
+      recognition.onend = () => { isRecording = false; document.getElementById('sttBtn').innerText = '🎙️ 音声入力'; };
+    }
+
+    function toggleSTT() {
+      if (!recognition) return alert('Chromeなどのブラウザをご利用ください');
+      if (isRecording) recognition.stop(); else recognition.start();
+    }
+
+    // --- ブラウザ発音判定 ---
+    let pronRecognizer = null;
+    let isPronChecking = false;
+
+    function checkPronunciationWithBrowser() {
+      if (!currentChallenge) return alert('先に出題ボタンを押してください');
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        return alert('お使いのブラウザは音声認識に対応していません（Chrome推奨）');
+      }
+
+      const pronBtn = document.getElementById('pronounceBtn');
+      const wordsContainer = document.getElementById('wordsContainer');
+
+      if (isPronChecking && pronRecognizer) {
+        pronRecognizer.stop();
+        return;
+      }
+
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      pronRecognizer = new SR();
+      pronRecognizer.lang = 'en-US';
+      pronRecognizer.continuous = false;
+      pronRecognizer.interimResults = false;
+
+      pronRecognizer.onstart = () => {
+        isPronChecking = true;
+        pronBtn.innerText = '⏹️ 発音を聞き取り中...';
+        wordsContainer.innerHTML = '<span style="font-size:0.85rem; color:#2563eb; font-weight:600;">🎙️ 正解の文をマイクに向かって発音してください...</span>';
+      };
+
+      pronRecognizer.onresult = (e) => {
+        const spoken = e.results[0][0].transcript;
+        renderBrowserPronAssessment(spoken, currentChallenge.text);
+      };
+
+      pronRecognizer.onerror = (e) => {
+        wordsContainer.innerHTML = '<span style="color:var(--danger); font-size:0.85rem;">音声を認識できませんでした。もう一度お試しください。</span>';
+      };
+
+      pronRecognizer.onend = () => {
+        isPronChecking = false;
+        pronBtn.innerText = '🎯 発音チェック';
+      };
+
+      pronRecognizer.start();
+    }
+
+    function renderBrowserPronAssessment(spokenText, targetText) {
+      const container = document.getElementById('wordsContainer');
+      container.innerHTML = '';
+
+      const targetWords = targetText.split(/\s+/);
+      const cleanSpokenWords = spokenText.toLowerCase().replace(/[.,?!'"]/g, '').split(/\s+/);
+
+      let matchedCount = 0;
+      const wordBadges = [];
+
+      targetWords.forEach(w => {
+        const cleanW = clean(w);
+        const isMatched = cleanSpokenWords.includes(cleanW);
+        if (isMatched) matchedCount++;
+
+        const span = document.createElement('span');
+        span.className = `word-badge ${isMatched ? 'score-good' : 'score-bad'}`;
+        span.innerText = w;
+        wordBadges.push(span);
+      });
+
+      const score = Math.round((matchedCount / targetWords.length) * 100);
+
+      const header = document.createElement('div');
+      header.style.width = '100%';
+      header.style.fontSize = '0.85rem';
+      header.style.fontWeight = '600';
+      header.style.marginBottom = '6px';
+      header.innerHTML = `
+        <div>🎯 通じた割合: <strong>${score}%</strong> (${matchedCount}/${targetWords.length} 単語)</div>
+        <div style="font-size:0.78rem; color:#64748b; font-weight:normal; margin-top:2px;">聞き取られた音声: "${spokenText}"</div>
+      `;
+      container.appendChild(header);
+
+      wordBadges.forEach(b => container.appendChild(b));
+    }
+  </script>
+</body>
+</html>
